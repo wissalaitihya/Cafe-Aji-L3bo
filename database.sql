@@ -41,7 +41,8 @@ CREATE TABLE reservations (
     reservation_date DATE,
     reservation_time TIME,
     status_reservation ENUM('pending','confirmed','cancelled') DEFAULT 'pending',
-
+    FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE SET NULL,
+    FOREIGN KEY (id_table) REFERENCES tables(id_table) ON DELETE CASCADE
 );
 
 -- SESSIONS
@@ -50,4 +51,7 @@ CREATE TABLE sessions (
     start_time DATETIME,
     end_time DATETIME,
     status_session ENUM('active','finished') DEFAULT 'active',
+    FOREIGN KEY (id_reservation) REFERENCES reservations(id_reservation) ON DELETE CASCADE,
+    FOREIGN KEY (id_game) REFERENCES games(id_game) ON DELETE CASCADE,
+    FOREIGN KEY (id_table) REFERENCES tables(id_table) ON DELETE CASCADE
 );
