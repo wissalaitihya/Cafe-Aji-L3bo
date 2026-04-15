@@ -2,6 +2,7 @@
 
 namespace App\Model;
 use PDO;
+use Core\Database;
 use core\Database;
 
 class Game {
