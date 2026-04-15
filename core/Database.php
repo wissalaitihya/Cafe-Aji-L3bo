@@ -6,7 +6,7 @@ class Database {
 
     private function __construct() {
 
-        $config = require __DIR__ . '/../config/database.php';
+        $config = require __DIR__ . '/../Database.php';
 
         try {
             $this->pdo = new PDO(

@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Models;
-
+namespace App\Model;
 use PDO;
-use App\Core\Database;
+use core\Database;
 
 class Game {
     protected PDO $pdo;
