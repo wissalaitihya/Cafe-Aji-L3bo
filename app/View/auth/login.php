@@ -14,6 +14,8 @@ session_start();
         <?php unset($_SESSION['error']); ?>
     <?php endif; ?>
 
+    //....
+
     <?php if (isset($_SESSION['success'])): ?>
         <p style="color: green;"><?php echo $_SESSION['success']; ?></p>
         <?php unset($_SESSION['success']); ?>
