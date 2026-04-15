@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use PDO;
-use App\Core\Database;
+use Core\Database;
 
 class Game {
     protected PDO $pdo;

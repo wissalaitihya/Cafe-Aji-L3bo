@@ -1,5 +1,10 @@
 <?php
 
+namespace Core;
+
+use PDO;
+use PDOException;
+
 class Database {
     private static ?Database $instance = null;
     private PDO $pdo;
