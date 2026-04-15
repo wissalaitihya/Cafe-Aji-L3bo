@@ -72,11 +72,9 @@ class Reservation
 
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        // fetch() returns false when nothing found — normalize to null
         return $result ?: null;
     }
 
-    //  3. create($data)
 
     public function create(array $data): bool
     {
