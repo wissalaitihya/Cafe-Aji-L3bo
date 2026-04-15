@@ -31,7 +31,14 @@ CREATE TABLE games (
     difficulty ENUM('easy','medium','hard'),
     description_game TEXT,
     status_game ENUM('available','in_use') DEFAULT 'available',
-    category_game ENUM('board','card','video','other')
+    category_game ENUM(
+        'social_deduction',
+        'party',
+        'cooperative',
+        'team',
+        'trivia',
+        'other'
+    )
 );
 
 -- RESERVATIONS
