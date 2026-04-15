@@ -37,6 +37,8 @@ CREATE TABLE games (
 -- RESERVATIONS
 CREATE TABLE reservations (
     id_reservation INT AUTO_INCREMENT PRIMARY KEY,
+    id_user INT,
+    id_table INT,
     people_count INT,
     reservation_date DATE,
     reservation_time TIME,
@@ -48,6 +50,9 @@ CREATE TABLE reservations (
 -- SESSIONS
 CREATE TABLE sessions (
     id_session INT AUTO_INCREMENT PRIMARY KEY,
+    id_reservation INT,
+    id_game INT,
+    id_table INT,
     start_time DATETIME,
     end_time DATETIME,
     status_session ENUM('active','finished') DEFAULT 'active',
