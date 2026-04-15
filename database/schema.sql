@@ -31,7 +31,14 @@ CREATE TABLE games (
     difficulty ENUM('easy','medium','hard'),
     description_game TEXT,
     status_game ENUM('available','in_use') DEFAULT 'available',
-    category_game ENUM('board','card','video','other')
+    category_game ENUM(
+        'social_deduction',
+        'party',
+        'cooperative',
+        'team',
+        'trivia',
+        'other'
+    )
 );
 
 -- RESERVATIONS
@@ -41,6 +48,8 @@ CREATE TABLE reservations (
     reservation_date DATE,
     reservation_time TIME,
     status_reservation ENUM('pending','confirmed','cancelled') DEFAULT 'pending',
+    id_user INT,
+    id_table INT,
     FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE,
     FOREIGN KEY (id_table) REFERENCES tables(id_table) ON DELETE CASCADE
 );
@@ -51,7 +60,10 @@ CREATE TABLE sessions (
     start_time DATETIME,
     end_time DATETIME,
     status_session ENUM('active','finished') DEFAULT 'active',
+    id_reservation INT,
+    id_game INT,
+    id_table INT,
     FOREIGN KEY (id_reservation) REFERENCES reservations(id_reservation) ON DELETE CASCADE,
-    FOREIGN KEY (id_game) REFERENCES games(id_game) ON DELETE CASCADE   
-    FOREIGN KEY (id_table) REFERENCES tables(id_table) ON DELETE CASCADE   
+    FOREIGN KEY (id_game) REFERENCES games(id_game) ON DELETE CASCADE,
+    FOREIGN KEY (id_table) REFERENCES tables(id_table) ON DELETE CASCADE
 );
