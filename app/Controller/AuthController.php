@@ -1,14 +1,17 @@
 <?php
+namespace app\Controller;
+use app\model\User;
+
 
 class AuthController
  {
     public function login() 
     {
-        include __DIR__."/../View/Auth/login.php";
+        include __DIR__."/../View/auth/login.php";
     }
     public function register()
     {
-        include __DIR__."/../View/Auth/register.php";
+        include __DIR__ ."/../View/auth/register.php";
     }
     public function handleLogin()
     {
@@ -16,7 +19,7 @@ class AuthController
             $email    = $_POST['email'] ?? '';
             $password = $_POST['password'] ?? '';
 
-            $user = new ???????????();
+            $user = new User();
             $user->setEmail($email);
             $user->setPassword($password);
             if ($user->login()) {
@@ -28,13 +31,13 @@ class AuthController
                 $_SESSION['user_role'] = $user->getRole();
                 
                 if ($_SESSION['user_role'] === 'admin') {
-                    header("Location: /Views/Session/dashboard.php");
+                    header("Location: /View/dashboard/admin.php");
                 } else {
-                    header("Location: /Views/player/dashboard.php");
+                    header("Location: /View/dashboard/player.php");
                 }
                 exit();
                 } else {
-                    header("Location: /Views/Auth/login.php?error=invalid_credentials");
+                    header("Location: /View/auth/login.php?error=invalid_credentials");
                 exit();
                  } 
             }
@@ -48,20 +51,20 @@ class AuthController
             $password_confirm = $_POST['password_confirm'] ?? '';
 
             if ($password !== $password_confirm) {
-                header("Location: /Views/Auth/register.php?error=Les+mots+de+passe+ne+correspondent+pas");
+                header("Location: /View/auth/register.php?error=Les+mots+de+passe+ne+correspondent+pas");
                 exit();
             }
-            $user = new ???????();
+            $user = new User();
             $user->setUsername($username);
             $user->setEmail($email);
             $user->setPassword($password);
             $user->setRole('user');
 
             if ($user->register()) {
-                header("Location: /Views/Auth/login.php?success=Inscription+reussie.+Veuillez+vous+connecter.");
+                header("Location: /View/auth/login.php?success=Inscription+reussie.+Veuillez+vous+connecter.");
                 exit();
             } else {
-                header("Location: /Views/Auth/register.php?error=Email+deja+utilise+ou+erreur");
+                header("Location: /View/auth/register.php?error=Email+deja+utilise+ou+erreur");
                 exit();
             }
         }
@@ -73,18 +76,10 @@ class AuthController
         }
         session_unset();
         session_destroy();
-        header("Location: /Views/Auth/login.php");
+        header("Location: /View/auth/login.php");
         exit();
     }
 
 }
-
-
-
-
-
-
-
-
 
 ?>
