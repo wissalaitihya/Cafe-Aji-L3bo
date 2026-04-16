@@ -32,10 +32,10 @@
 </div>
 
 <div class="quick-links">
-    <a href="view/games" class="btn">Manage Games</a>
-    <a href="view/reservations" class="btn">Manage Reservations</a>
-    <a href="view/sessions" class="btn">Sessions Dashboard</a>
-    <a href="view/sessions/create" class="btn btn-success">Start Session</a>
+    <a href="<?= BASE ?>/games" class="btn">Manage Games</a>
+    <a href="<?= BASE ?>/reservations" class="btn">Manage Reservations</a>
+    <a href="<?= BASE ?>/sessions" class="btn">Sessions Dashboard</a>
+    <a href="<?= BASE ?>/sessions/create" class="btn btn-success">Start Session</a>
 </div>
 
 <h2>All Reservations</h2>

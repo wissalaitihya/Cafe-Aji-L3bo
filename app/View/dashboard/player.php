@@ -3,9 +3,9 @@
 <h1>Welcome, <?= htmlspecialchars($userName) ?>!</h1>
 
 <div class="quick-links">
-    <a href="view/games" class="btn">Browse Games</a>
-    <a href="view/reservations/create" class="btn btn-success">Book a Table</a>
-    <a href="view/reservations/availability" class="btn btn-secondary">Check Availability</a>
+    <a href="<?= BASE ?>/games" class="btn">Browse Games</a>
+    <a href="<?= BASE ?>/reservations/create" class="btn btn-success">Book a Table</a>
+    <a href="<?= BASE ?>/reservations/availability" class="btn btn-secondary">Check Availability</a>
 </div>
 
 <h2>My Upcoming Reservations</h2>
@@ -17,7 +17,7 @@
 ?>
 
 <?php if (empty($upcoming)): ?>
-    <p>No upcoming reservations. <a href="view/reservations/create">Book a table now!</a></p>
+    <p>No upcoming reservations. <a href="<?= BASE ?>/reservations/create">Book a table now!</a></p>
 <?php else: ?>
     <table class="data-table">
         <thead>
@@ -42,6 +42,6 @@
     </table>
 <?php endif; ?>
 
-<p><a href="view/reservations/my">View all my reservations &rarr;</a></p>
+<p><a href="<?= BASE ?>/reservations/my">View all my reservations &rarr;</a></p>
 
 <?php require __DIR__ . '/../layout/footer.php'; ?>
