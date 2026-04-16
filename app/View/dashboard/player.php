@@ -3,9 +3,15 @@
 <h1>Welcome, <?= htmlspecialchars($userName) ?>!</h1>
 
 <div class="quick-links">
+<<<<<<< Updated upstream
     <a href="<?= BASE ?>/games" class="btn">Browse Games</a>
     <a href="<?= BASE ?>/reservations/create" class="btn btn-success">Book a Table</a>
     <a href="<?= BASE ?>/reservations/availability" class="btn btn-secondary">Check Availability</a>
+=======
+    <a href="/Cafe-Aji-L3bo/games" class="btn">Browse Games</a>
+    <a href="/Cafe-Aji-L3bo/reservations/create" class="btn btn-success">Book a Table</a>
+    <a href="/Cafe-Aji-L3bo/reservations/availability" class="btn btn-secondary">Check Availability</a>
+>>>>>>> Stashed changes
 </div>
 
 <h2>My Upcoming Reservations</h2>
@@ -17,7 +23,11 @@
 ?>
 
 <?php if (empty($upcoming)): ?>
+<<<<<<< Updated upstream
     <p>No upcoming reservations. <a href="<?= BASE ?>/reservations/create">Book a table now!</a></p>
+=======
+    <p>No upcoming reservations. <a href="/Cafe-Aji-L3bo/reservations/create">Book a table now!</a></p>
+>>>>>>> Stashed changes
 <?php else: ?>
     <table class="data-table">
         <thead>
@@ -42,6 +52,10 @@
     </table>
 <?php endif; ?>
 
+<<<<<<< Updated upstream
 <p><a href="<?= BASE ?>/reservations/my">View all my reservations &rarr;</a></p>
+=======
+<p><a href="/Cafe-Aji-L3bo/reservations/my">View all my reservations &rarr;</a></p>
+>>>>>>> Stashed changes
 
 <?php require __DIR__ . '/../layout/footer.php'; ?>
