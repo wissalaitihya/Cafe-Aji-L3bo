@@ -5,84 +5,106 @@ use App\Model\User;
 
 class AuthController
  {
-    public function login() 
+      public function loginForm()
     {
-        include __DIR__."/../View/auth/login.php";
+        $error = $_GET['error'] ?? null;
+        $success = $_GET['success'] ?? null;
+        $this->render('auth/login', ['error' => $error, 'success' => $success]);
     }
+    public function login()
+    {
+        $email = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+
+        if (empty($email) || empty($password)) {
+            $this->redirect('/login?error=Please fill all fields');
+            return;
+        }
+
+        $user = new User();
+        $user->setEmail($email);
+        $user->setPassword($password);
+
+        if ($user->login()) {
+            $_SESSION['user_id'] = $user->getId();
+            $_SESSION['user_name'] = $user->getUsername();
+            $_SESSION['user_role'] = $user->getRole();
+
+            if ($user->getRole() === 'admin') {
+                $this->redirect('/admin/dashboard');
+            } else {
+                $this->redirect('/player/dashboard');
+            }
+        } else {
+            $this->redirect('/login?error=Invalid email or password');
+        }
+    }
+
+    public function registerForm()
+    {
+        $error = $_GET['error'] ?? null;
+        $this->render('auth/register', ['error' => $error]);
+    }
+
     public function register()
     {
-        include __DIR__ ."/../View/auth/register.php";
-    }
-    public function handleLogin()
-    {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $name = trim($_POST['name'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $confirm = $_POST['password_confirm'] ?? '';
 
-            $email    = $_POST['email'] ?? '';
-            $pass_word = $_POST['pass_word'] ?? '';
-
-            $user = new User();
-            $user->setEmail($email);
-            $user->setPassword($pass_word);
-            if ($user->login()) {
-                if (session_status() === PHP_SESSION_NONE) {
-                    session_start();
-                }
-                $_SESSION['user_id'] = $user->getId();
-                $_SESSION['user_name'] = $user->getUsername();
-                $_SESSION['user_role'] = $user->getRole();
-                
-                if ($_SESSION['user_role'] === 'admin') {
-                    header("Location: /Cafe-Aji-L3bo/public/index.php?action=adminDashboard");
-                } else {
-                    header("Location: /Cafe-Aji-L3bo/public/index.php?action=playerDashboard");
-                }
-                exit();
-                } else {
-                    header("Location: /Cafe-Aji-L3bo/public/index.php?action=login&error=invalid_credentials");
-                exit();
-                 } 
-            }
+        if (empty($name) || empty($email) || empty($password)) {
+            $this->redirect('/register?error=Please fill all fields');
+            return;
         }
 
-        public function handleRegister(){
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $username         = $_POST['name_user'] ?? '';
-            $phone            = $_POST['phone_number'] ?? '';
-            $email            = $_POST['email'] ?? '';
-            $password         = $_POST['pass_word'] ?? '';
-            $password_confirm = $_POST['password_confirm'] ?? '';
+        if ($password !== $confirm) {
+            $this->redirect('/register?error=Passwords do not match');
+            return;
+        }
 
-            if ($password !== $password_confirm) {
-                header("Location: /Cafe-Aji-L3bo/public/index.php?action=register&error=Les+mots+de+passe+ne+correspondent+pas");
-                exit();
-            }
-            $user = new User();
-            $user->setUsername($username);
-            $user->setPhoneNumber($phone);
-            $user->setEmail($email);
-            $user->setPassword($password);
-            $user->setRole('player');
+        $user = new User();
+        $user->setUsername($name);
+        $user->setEmail($email);
+        $user->setPhone($phone);
+        $user->setPassword($password);
+        $user->setRole('player');
 
-         if ($user->register()) {
-    header("Location: /Cafe-Aji-L3bo/public/index.php?action=login&success=1");
-    exit();
-} else {
-    header("Location: /Cafe-Aji-L3bo/public/index.php?action=register&error=1");
-    exit();
-}
+        if ($user->register()) {
+            $this->redirect('/login?success=Account created! Please login');
+        } else {
+            $this->redirect('/register?error=Email already exists');
         }
     }
-     public function handleLogout()
+
+    public function logout()
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
         session_unset();
         session_destroy();
-        header("Location: /View/auth/login.php");
-        exit();
+        $this->redirect('/login');
+        exit;
     }
 
-}
+    // ========================
+    // HELPER METHODS
+    // ========================
+    private function render($view, $data = [])
+    {
+        extract($data);
+        $viewPath = __DIR__ . "/../View/{$view}.php";
+        if (!file_exists($viewPath)) {
+            http_response_code(404);
+            require __DIR__ . '/../View/error/404.php';
+            return;
+        }
+        require $viewPath;
+    }
 
+    private function redirect($url)
+    {
+        header("Location: /Cafe-Aji-L3bo" . $url);
+        exit;
+    }
+}
 ?>
