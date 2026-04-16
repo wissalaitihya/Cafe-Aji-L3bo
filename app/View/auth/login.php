@@ -14,15 +14,13 @@ session_start();
         <?php unset($_SESSION['error']); ?>
     <?php endif; ?>
 
-    //....
-
     <?php if (isset($_SESSION['success'])): ?>
         <p style="color: green;"><?php echo $_SESSION['success']; ?></p>
         <?php unset($_SESSION['success']); ?>
     <?php endif; ?>
     <h2>connect to your account </h2>
 
-    <form action="../../controllers/AuthController.php?action=login" method="POST">
+   <form method="POST" action="/Cafe-Aji-L3bo/public/index.php?action=handleLogin">
       <div class="form-group">
         <label class="form-label" for="email">Email</label>
         <input type="email" id="email" name="email" class="form-input" placeholder="votre@email.com" required>
@@ -30,7 +28,7 @@ session_start();
 
       <div class="form-group">
         <label class="form-label" for="password">Password</label>
-        <input type="password" id="password" name="password" class="form-input" placeholder="Your password"
+        <input type="password" id="password" name="pass_word" class="form-input" placeholder="Your password"
           required>
       </div>
 
