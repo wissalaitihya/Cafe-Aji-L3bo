@@ -1,48 +1,22 @@
 <?php
+namespace App\Controllers;
 
-namespace App\Controller;
+use App\Models\Reservation;
+use App\Models\Session;
 
-use App\Model\Game;
-use App\Model\Reservation;
-use App\Model\Session;
-use App\Model\Table;
+class DashboardController {
+    private $db;
 
-class DashboardController extends Controller
-{
-    public function admin(): void
-    {
-        $this->requireAdmin();
-
-        $gameModel = new Game();
-        $reservationModel = new Reservation();
-        $sessionModel = new Session();
-        $tableModel = new Table();
-
-        $totalGames = count($gameModel->getAll());
-        $todayReservations = $reservationModel->getTodayReservations();
-        $allReservations = $reservationModel->getAll();
-        $activeSessions = $sessionModel->getActive();
-        $tables = $tableModel->getAll();
-
-        $this->render('dashboard/admin', [
-            'totalGames'        => $totalGames,
-            'todayReservations' => $todayReservations,
-            'allReservations'   => $allReservations,
-            'activeSessions'    => $activeSessions,
-            'tables'            => $tables,
-        ]);
+    public function __construct($db) {
+        $this->db = $db;
     }
 
-    public function player(): void
-    {
-        $this->requireLogin();
+    // ── Dashboard PLAYER ──────────────────────
+    public function playerDashboard(): void {
 
-        $reservationModel = new Reservation();
-        $myReservations = $reservationModel->getByUserId($_SESSION['user_id']);
+        $reservationModel = new Reservation($this->db);
+        $reservations = $reservationModel->getByPhone('...');
 
-        $this->render('dashboard/player', [
-            'myReservations' => $myReservations,
-            'userName'       => $_SESSION['user_name'] ?? 'Player',
-        ]);
+        require_once __DIR__ . '/../../views/player/dashboard.php';
     }
 }
