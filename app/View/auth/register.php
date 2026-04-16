@@ -27,11 +27,11 @@ session_start();
     <?php endif; ?>
 
 
-    <form method="POST" action="/Controller/AuthController.php?action=register">
+    <form method="POST" action="/index.php?action=handleRegister">
         <div class="form-group"></div>
-        <label for="name">Username:</label>
-        <input type="text" id="name" name="name" required><br><br>
-    </div>
+            <label for="name">Username:</label>
+            <input type="text" id="name" name="name" required><br><br>
+        </div>
 
         <div class="form-group"></div>
         <label for="email">Email:</label>
@@ -45,11 +45,11 @@ session_start();
 
           <div class="form-group"></div>
         <label for="password">Password:</label>
-        <inputtype="password"
+        <input type="password"
           id="password"
           name="password"
           class="form-input"
-          placeholder="Minimum 6 caractères"
+          placeholder="Minimum 6 caractÃ¨res"
           minlength="6"
           required><br><br>
     </div>

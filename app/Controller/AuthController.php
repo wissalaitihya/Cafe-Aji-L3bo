@@ -1,6 +1,6 @@
 <?php
-namespace app\Controller;
-use app\model\User;
+namespace App\Controller;
+use App\Model\User;
 
 
 class AuthController
@@ -58,7 +58,7 @@ class AuthController
             $user->setUsername($username);
             $user->setEmail($email);
             $user->setPassword($password);
-            $user->setRole('user');
+            $user->setRole('player');
 
             if ($user->register()) {
                 header("Location: /View/auth/login.php?success=Inscription+reussie.+Veuillez+vous+connecter.");
