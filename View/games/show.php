@@ -1,46 +1,32 @@
-<?php require_once __DIR__ . '/../layout/header.php'; ?>
+<?php require __DIR__ . '/../layout/header.php'; ?>
 
-<h1><?= htmlspecialchars($game['name']) ?></h1>
+<a href="/Cafe-Aji-L3bo/games" class="btn btn-small">&larr; Back to Games</a>
 
-<div class="game-detail">
-    <p class="category"><strong>Catégorie:</strong> <?= htmlspecialchars($game['category']) ?></p>
-    
-    <p class="difficulty">
-        <strong>Difficulté:</strong> 
-        <?php for ($i = 1; $i <= 5; $i++): ?>
-            <span class="<?= $i <= $game['difficulty'] ? 'filled' : '' ?>">★</span>
-        <?php endfor; ?>
-    </p>
-    
-    <p class="players">
-        <strong>Joueurs:</strong> 
-        <?= (int)$game['min_players'] ?> - <?= (int)$game['max_players'] ?> personnes
-    </p>
-    
-    <p class="duration">
-        <strong>Durée estimée:</strong> <?= (int)$game['duration_minutes'] ?> minutes
-    </p>
-    
-    <p class="status <?= $game['status'] ?>">
-        <strong>Statut:</strong> 
-        <?= $game['status'] === 'available' ? 'Disponible' : 'En cours d\'utilisation' ?>
-    </p>
-    
-    <div class="description">
-        <strong>Description:</strong>
-        <p><?= nl2br(htmlspecialchars($game['description'])) ?></p>
-    </div>
-    
-    <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
-        <div class="admin-actions">
-            <a href="/games/<?= (int)$game['id'] ?>/edit" class="btn">Modifier</a>
-            <form method="POST" action="/games/<?= (int)$game['id'] ?>/delete" style="display:inline">
-                <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr?')">Supprimer</button>
+<div class="detail-card">
+    <h1><?= htmlspecialchars($game['name_game']) ?></h1>
+
+    <span class="badge badge-<?= $game['status_game'] === 'available' ? 'success' : 'warning' ?>">
+        <?= $game['status_game'] ?>
+    </span>
+
+    <table class="detail-table">
+        <tr><th>Category</th><td><?= htmlspecialchars($game['category_game']) ?></td></tr>
+        <tr><th>Players</th><td><?= $game['players_min'] ?> - <?= $game['players_max'] ?></td></tr>
+        <tr><th>Duration</th><td><?= $game['duration'] ?> minutes</td></tr>
+        <tr><th>Difficulty</th><td><?= htmlspecialchars($game['difficulty']) ?></td></tr>
+    </table>
+
+    <h3>Description</h3>
+    <p><?= htmlspecialchars($game['description_game'] ?? 'No description') ?></p>
+
+    <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+        <div class="card-actions">
+            <a href="/Cafe-Aji-L3bo/games/<?= $game['id_game'] ?>/edit" class="btn btn-warning">Edit</a>
+            <form action="/Cafe-Aji-L3bo/games/<?= $game['id_game'] ?>/delete" method="POST" style="display:inline" onsubmit="return confirm('Delete this game?')">
+                <button type="submit" class="btn btn-danger">Delete</button>
             </form>
         </div>
     <?php endif; ?>
-    
-    <a href="/games" class="btn">← Retour à la liste</a>
 </div>
 
-<?php require_once __DIR__ . '/../layout/footer.php'; ?>
+<?php require __DIR__ . '/../layout/footer.php'; ?>
