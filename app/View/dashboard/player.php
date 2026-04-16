@@ -1,35 +1,47 @@
-<section class="player-dashboard">
-    <h2>Bienvenue, <?= htmlspecialchars($userName) ?> 👋</h2>
+<?php require __DIR__ . '/../layout/header.php'; ?>
 
-    <div class="dashboard-grid">
-        <div class="card">
-            <h3>📅 Mes Réservations</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Heure</th>
-                        <th>Personnes</th>
-                        <th>Statut</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($reservations as $res): ?>
-                    <tr>
-                        <td><?= $res->date ?></td>
-                        <td><?= $res->time ?>h</td>
-                        <td><?= $res->nb_people ?></td>
-                        <td><span class="badge <?= $res->status ?>"><?= $res->status ?></span></td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-            <a href="/reservations/create" class="btn">Réserver une nouvelle table</a>
-        </div>
+<h1>Welcome, <?= htmlspecialchars($userName) ?>!</h1>
 
-        <div class="card">
-            <h3>🎲 Suggestions pour vous</h3>
-            <p>Basé sur vos dernières parties au Aji L3bo.</p>
-            </div>
-    </div>
-</section>
+<div class="quick-links">
+    <a href="view/games" class="btn">Browse Games</a>
+    <a href="view/reservations/create" class="btn btn-success">Book a Table</a>
+    <a href="view/reservations/availability" class="btn btn-secondary">Check Availability</a>
+</div>
+
+<h2>My Upcoming Reservations</h2>
+
+<?php
+    $upcoming = array_filter($myReservations, function($r) {
+        return $r['reservation_date'] >= date('Y-m-d') && $r['status_reservation'] !== 'cancelled';
+    });
+?>
+
+<?php if (empty($upcoming)): ?>
+    <p>No upcoming reservations. <a href="view/reservations/create">Book a table now!</a></p>
+<?php else: ?>
+    <table class="data-table">
+        <thead>
+            <tr><th>Date</th><th>Time</th><th>Table</th><th>Game</th><th>People</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+            <?php foreach ($upcoming as $r): ?>
+                <tr>
+                    <td><?= $r['reservation_date'] ?></td>
+                    <td><?= $r['reservation_time'] ?></td>
+                    <td><?= htmlspecialchars($r['name_table'] ?? '-') ?></td>
+                    <td><?= htmlspecialchars($r['name_game'] ?? '-') ?></td>
+                    <td><?= $r['people_count'] ?></td>
+                    <td>
+                        <span class="badge badge-<?= $r['status_reservation'] === 'confirmed' ? 'success' : 'warning' ?>">
+                            <?= $r['status_reservation'] ?>
+                        </span>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+<?php endif; ?>
+
+<p><a href="view/reservations/my">View all my reservations &rarr;</a></p>
+
+<?php require __DIR__ . '/../layout/footer.php'; ?>
