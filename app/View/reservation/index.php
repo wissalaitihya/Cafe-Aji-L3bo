@@ -38,11 +38,11 @@
                     </td>
                     <td>
                         <?php if ($r['status_reservation'] === 'pending'): ?>
-                            <form action="<?= BASE ?>/reservations/<?= $r['id_reservation'] ?>/status" method="POST" style="display:inline">
+                            <form action="/Cafe-Aji-L3bo/reservations/<?= $r['id_reservation'] ?>/status" method="POST" style="display:inline">
                                 <input type="hidden" name="status" value="confirmed">
                                 <button type="submit" class="btn btn-small btn-success">Confirm</button>
                             </form>
-                            <form action="<?= BASE ?>/reservations/<?= $r['id_reservation'] ?>/status" method="POST" style="display:inline">
+                            <form action="/Cafe-Aji-L3bo/reservations/<?= $r['id_reservation'] ?>/status" method="POST" style="display:inline">
                                 <input type="hidden" name="status" value="cancelled">
                                 <button type="submit" class="btn btn-small btn-danger">Cancel</button>
                             </form>

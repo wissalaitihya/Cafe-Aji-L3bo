@@ -1,7 +1,7 @@
 <?php require __DIR__ . '/../layout/header.php'; ?>
 
 <h1>My Reservations</h1>
-<a href="<?= BASE ?>/reservations/create" class="btn">+ Book a Table</a>
+<a href="/Cafe-Aji-L3bo/reservations/create" class="btn">+ Book a Table</a>
 
 <?php if (empty($reservations)): ?>
     <p>You have no reservations yet.</p>

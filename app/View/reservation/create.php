@@ -12,7 +12,7 @@
     <p class="alert alert-error"><?= htmlspecialchars($error) ?></p>
 <?php endif; ?>
 
-<form action="<?= BASE ?>/reservations" method="POST" class="form-card">
+<form action="/Cafe-Aji-L3bo/reservations" method="POST" class="form-card">
     <div class="form-group">
         <label for="reservation_date">Date</label>
         <input type="date" id="reservation_date" name="reservation_date" value="<?= htmlspecialchars($pDate) ?>" min="<?= date('Y-m-d') ?>" required>
@@ -53,12 +53,11 @@
     </div>
 
     <button type="submit" class="btn">Book Now</button>
-    <a href="<?= BASE ?>/reservations/availability" class="btn btn-secondary">Check Availability First</a>
+    <a href="/Cafe-Aji-L3bo/reservations/availability" class="btn btn-secondary">Check Availability First</a>
 </form>
 
 <script>
 (function() {
-    const BASE = '<?= BASE ?>';
     const dateInput = document.getElementById('reservation_date');
     const timeInput = document.getElementById('reservation_time');
     const tableSelect = document.getElementById('id_table');
@@ -75,7 +74,7 @@
         const currentGame = gameSelect.value;
 
         // Fetch available tables
-        fetch(BASE + '/api/available-tables?date=' + encodeURIComponent(date) + '&time=' + encodeURIComponent(time))
+        fetch('/Cafe-Aji-L3bo/api/available-tables?date=' + encodeURIComponent(date) + '&time=' + encodeURIComponent(time))
             .then(r => r.json())
             .then(tables => {
                 tableSelect.innerHTML = '<option value="">-- Choose a table --</option>';
@@ -89,7 +88,7 @@
             });
 
         // Fetch available games
-        fetch(BASE + '/api/available-games?date=' + encodeURIComponent(date) + '&time=' + encodeURIComponent(time))
+        fetch('/Cafe-Aji-L3bo/api/available-games?date=' + encodeURIComponent(date) + '&time=' + encodeURIComponent(time))
             .then(r => r.json())
             .then(games => {
                 gameSelect.innerHTML = '<option value="0">-- No game --</option>';

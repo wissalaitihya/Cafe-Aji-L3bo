@@ -6,10 +6,10 @@ use App\Model\Reservation;
 use App\Model\Table;
 use App\Model\Game;
 
-class ReservationController extends Controller
+class ReservationController
 {
     // Admin: all reservations
-    public function index(): void
+    public function index()
     {
         $this->requireAdmin();
 
@@ -20,7 +20,7 @@ class ReservationController extends Controller
     }
 
     // Show booking form
-    public function create(): void
+    public function create()
     {
         $this->requireLogin();
 
@@ -64,7 +64,7 @@ class ReservationController extends Controller
     }
 
     // Save reservation
-    public function store(): void
+    public function store()
     {
         $this->requireLogin();
 
@@ -136,7 +136,7 @@ class ReservationController extends Controller
     }
 
     // Player: my reservations
-    public function myReservations(): void
+    public function myReservations()
     {
         $this->requireLogin();
 
@@ -147,7 +147,7 @@ class ReservationController extends Controller
     }
 
     // Check availability page
-    public function availability(): void
+    public function availability()
     {
         $this->requireLogin();
 
@@ -169,7 +169,7 @@ class ReservationController extends Controller
     }
 
     // Admin: confirm/cancel
-    public function updateStatus(int $id): void
+    public function updateStatus($id)
     {
         $this->requireAdmin();
 
@@ -178,5 +178,93 @@ class ReservationController extends Controller
         $reservationModel->updateStatus($id, $status);
 
         $this->redirect('/reservations');
+    }
+
+    // ── API: return available tables as JSON ──
+    public function apiAvailableTables()
+    {
+        $this->requireLogin();
+
+        header('Content-Type: application/json');
+
+        $date = $_GET['date'] ?? '';
+        $time = $_GET['time'] ?? '';
+
+        if (empty($date) || empty($time)) {
+            echo json_encode([]);
+            return;
+        }
+
+        $tableModel = new Table();
+        $tables = $tableModel->getAvailableForSlot($date, $time);
+        echo json_encode($tables);
+    }
+
+    // ── API: return available games as JSON ──
+    public function apiAvailableGames()
+    {
+        $this->requireLogin();
+
+        header('Content-Type: application/json');
+
+        $date = $_GET['date'] ?? '';
+        $time = $_GET['time'] ?? '';
+
+        if (empty($date) || empty($time)) {
+            echo json_encode([]);
+            return;
+        }
+
+        $gameModel = new Game();
+        $games = $gameModel->getAvailableForSlot($date, $time);
+        echo json_encode($games);
+    }
+
+    // ========================
+    // HELPER METHODS
+    // ========================
+    private function render($view, $data = [])
+    {
+        extract($data);
+        $viewPath = __DIR__ . "/../View/{$view}.php";
+        if (!file_exists($viewPath)) {
+            http_response_code(404);
+            require __DIR__ . '/../View/error/404.php';
+            return;
+        }
+        require $viewPath;
+    }
+
+    private function redirect($url)
+    {
+        header("Location: /Cafe-Aji-L3bo" . $url);
+        exit;
+    }
+
+    private function isLoggedIn()
+    {
+        return isset($_SESSION['user_id']);
+    }
+
+    private function isAdmin()
+    {
+        return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
+    }
+
+    private function requireLogin()
+    {
+        if (!$this->isLoggedIn()) {
+            $this->redirect('/login');
+        }
+    }
+
+    private function requireAdmin()
+    {
+        $this->requireLogin();
+        if (!$this->isAdmin()) {
+            http_response_code(403);
+            require __DIR__ . '/../View/error/403.php';
+            exit;
+        }
     }
 }
