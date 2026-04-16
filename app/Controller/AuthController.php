@@ -25,10 +25,15 @@ class AuthController
         $user->setEmail($email);
         $user->setPassword($password);
 
-        if ($user->login()) {
-            $_SESSION['user_id'] = $user->getId();
-            $_SESSION['user_name'] = $user->getUsername();
-            $_SESSION['user_role'] = $user->getRole();
+            if ($password !== $password_confirm) {
+                header("Location: /View/auth/register.php?error=Les+mots+de+passe+ne+correspondent+pas");
+                exit();
+            }
+            $user = new User();
+            $user->setUsername($username);
+            $user->setEmail($email);
+            $user->setPassword($password);
+            $user->setRole('player');
 
             if ($user->getRole() === 'admin') {
                 $this->redirect('/admin/dashboard');

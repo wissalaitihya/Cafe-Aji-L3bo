@@ -45,20 +45,16 @@ CREATE TABLE games (
 -- RESERVATIONS
 CREATE TABLE reservations (
     id_reservation INT AUTO_INCREMENT PRIMARY KEY,
-    id_user INT,
-    id_table INT,
-    people_count INT,
-    reservation_date DATE,
-    reservation_time TIME,
-    status_reservation ENUM(
-        'pending',
-        'confirmed',
-        'cancelled'
-    ) DEFAULT 'pending',
-    id_user INT,
-    id_table INT,
+    id_user INT NOT NULL,
+    id_table INT NOT NULL,
+    id_game INT DEFAULT NULL,
+    people_count INT NOT NULL,
+    reservation_date DATE NOT NULL,
+    reservation_time TIME NOT NULL,
+    status_reservation ENUM('pending', 'confirmed', 'cancelled') DEFAULT 'pending',
     FOREIGN KEY (id_user) REFERENCES users (id_user) ON DELETE CASCADE,
-    FOREIGN KEY (id_table) REFERENCES tables (id_table) ON DELETE CASCADE
+    FOREIGN KEY (id_table) REFERENCES tables (id_table) ON DELETE CASCADE,
+    FOREIGN KEY (id_game) REFERENCES games (id_game) ON DELETE SET NULL
 );
 
 -- SESSIONS

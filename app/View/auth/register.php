@@ -27,18 +27,11 @@ session_start();
         <?php endif; ?>
 
 
-    <form method="POST" action="/Cafe-Aji-L3bo/public/index.php?action=handleRegister">
+    <form method="POST" action="/index.php?action=handleRegister">
         <div class="form-group"></div>
             <label for="name">Username:</label>
-            <input type="text"  name="name_user" required><br><br>
+            <input type="text" id="name" name="name" required><br><br>
         </div>
-
-        <label for="phone">Phone Number:</label>
-        <input 
-        type="text" 
-        id="phone" 
-        name="phone_number" 
-        required><br><br>
 
     
         <div class="form-group"></div>
@@ -46,10 +39,16 @@ session_start();
             <input type="email" name="email"  class="form-input" placeholder="votre@email.com" required><br><br>
          </div>
 
-        <div class="form-group"></div>
-            <label for="password">Password:</label>
-            <input type="password" name="pass_word" class="form-input" placeholder="Minimum 6 caractères" minlength="6" required><br><br>
-        </div>
+          <div class="form-group"></div>
+        <label for="password">Password:</label>
+        <input type="password"
+          id="password"
+          name="password"
+          class="form-input"
+          placeholder="Minimum 6 caractÃ¨res"
+          minlength="6"
+          required><br><br>
+    </div>
 
         <div class="form-group">
             <label for="password_confirm">Confirm Password:</label>
