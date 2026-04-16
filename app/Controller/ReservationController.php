@@ -220,9 +220,7 @@ class ReservationController
         echo json_encode($games);
     }
 
-    // ========================
     // HELPER METHODS
-    // ========================
     private function render($view, $data = [])
     {
         extract($data);
