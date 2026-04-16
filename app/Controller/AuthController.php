@@ -1,6 +1,6 @@
 <?php
-namespace app\Controller;
-use app\model\User;
+namespace App\Controller;
+use App\Model\User;
 
 
 class AuthController
@@ -16,12 +16,13 @@ class AuthController
     public function handleLogin()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
             $email    = $_POST['email'] ?? '';
-            $password = $_POST['password'] ?? '';
+            $pass_word = $_POST['pass_word'] ?? '';
 
             $user = new User();
             $user->setEmail($email);
-            $user->setPassword($password);
+            $user->setPassword($pass_word);
             if ($user->login()) {
                 if (session_status() === PHP_SESSION_NONE) {
                     session_start();
@@ -31,13 +32,13 @@ class AuthController
                 $_SESSION['user_role'] = $user->getRole();
                 
                 if ($_SESSION['user_role'] === 'admin') {
-                    header("Location: /View/dashboard/admin.php");
+                    header("Location: /Cafe-Aji-L3bo/public/index.php?action=adminDashboard");
                 } else {
-                    header("Location: /View/dashboard/player.php");
+                    header("Location: /Cafe-Aji-L3bo/public/index.php?action=playerDashboard");
                 }
                 exit();
                 } else {
-                    header("Location: /View/auth/login.php?error=invalid_credentials");
+                    header("Location: /Cafe-Aji-L3bo/public/index.php?action=login&error=invalid_credentials");
                 exit();
                  } 
             }
@@ -45,28 +46,30 @@ class AuthController
 
         public function handleRegister(){
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $username         = $_POST['name'] ?? '';
+            $username         = $_POST['name_user'] ?? '';
+            $phone            = $_POST['phone_number'] ?? '';
             $email            = $_POST['email'] ?? '';
-            $password         = $_POST['password'] ?? '';
+            $password         = $_POST['pass_word'] ?? '';
             $password_confirm = $_POST['password_confirm'] ?? '';
 
             if ($password !== $password_confirm) {
-                header("Location: /View/auth/register.php?error=Les+mots+de+passe+ne+correspondent+pas");
+                header("Location: /Cafe-Aji-L3bo/public/index.php?action=register&error=Les+mots+de+passe+ne+correspondent+pas");
                 exit();
             }
             $user = new User();
             $user->setUsername($username);
+            $user->setPhoneNumber($phone);
             $user->setEmail($email);
             $user->setPassword($password);
-            $user->setRole('user');
+            $user->setRole('player');
 
-            if ($user->register()) {
-                header("Location: /View/auth/login.php?success=Inscription+reussie.+Veuillez+vous+connecter.");
-                exit();
-            } else {
-                header("Location: /View/auth/register.php?error=Email+deja+utilise+ou+erreur");
-                exit();
-            }
+         if ($user->register()) {
+    header("Location: /Cafe-Aji-L3bo/public/index.php?action=login&success=1");
+    exit();
+} else {
+    header("Location: /Cafe-Aji-L3bo/public/index.php?action=register&error=1");
+    exit();
+}
         }
     }
      public function handleLogout()
