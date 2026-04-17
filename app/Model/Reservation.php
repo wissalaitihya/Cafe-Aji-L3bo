@@ -276,6 +276,13 @@ class Reservation
             LEFT JOIN tables t ON r.id_table = t.id_table
             LEFT JOIN games  g ON r.id_game  = g.id_game
             WHERE r.status_reservation = 'confirmed'
+
+             AND NOT EXISTS (
+                SELECT 1 FROM sessions s
+                WHERE s.id_reservation = r.id_reservation
+                  AND s.status_session = 'active'
+              )
+                  
             ORDER BY r.reservation_date ASC, r.reservation_time ASC
         ";
 
