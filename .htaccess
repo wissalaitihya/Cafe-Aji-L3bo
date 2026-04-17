@@ -1,3 +1,16 @@
 RewriteEngine On
+
+GUARD: requests already pointing into public/ are served as-is
+(prevents infinite rewrite loops)
+RewriteRule ^public/ - [L]
+
+Root URL → public/ (DirectoryIndex picks up public/index.php)
 RewriteRule ^$ public/ [L]
-RewriteRule (.*) public/$1 [L] 
+
+Static assets (by extension) → forward to the matching file in public/
+RewriteRule ^(.+.(css|js|map|png|jpg|jpeg|gif|ico|svg|webp|woff|woff2|ttf|eot))$ public/$1 [L,NC]
+
+All other requests → front controller
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ public/index.php [QSA,L]
