@@ -1,9 +1,6 @@
 # 🔹 Composer dependencies
 /vendor/
 
-# 🔹 Environment file (VERY IMPORTANT - contains DB password)
-.env
-
 # 🔹 Logs
 /logs/
 /*.log
@@ -18,9 +15,3 @@ Thumbs.db
 # 🔹 IDE / editor files
 .vscode/
 .idea/
-
-# 🔹 Node (if you use frontend tools later)
-node_modules/
-
-# 🔹 Temporary uploads (if you add file upload feature)
-/uploads/tmp/ 
