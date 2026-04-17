@@ -60,16 +60,16 @@ CREATE TABLE reservations (
 -- SESSIONS
 CREATE TABLE sessions (
     id_session INT AUTO_INCREMENT PRIMARY KEY,
-    id_reservation INT,
-    id_game INT,
-    id_table INT,
+    id_res INT,
+    id_ga INT,
+    id_tab INT,
     start_time DATETIME,
     end_time DATETIME,
     status_session ENUM('active', 'finished') DEFAULT 'active',
     id_reservation INT,
     id_game INT,
     id_table INT,
-    FOREIGN KEY (id_reservation) REFERENCES reservations (id_reservation) ON DELETE CASCADE,
-    FOREIGN KEY (id_game) REFERENCES games (id_game) ON DELETE CASCADE,
-    FOREIGN KEY (id_table) REFERENCES tables (id_table) ON DELETE CASCADE
+    FOREIGN KEY (id_res) REFERENCES reservations (id_reservation) ON DELETE CASCADE,
+    FOREIGN KEY (id_ga) REFERENCES games (id_game) ON DELETE CASCADE,
+    FOREIGN KEY (id_tab) REFERENCES tables (id_table) ON DELETE CASCADE
 );
