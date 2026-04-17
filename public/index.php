@@ -1,14 +1,12 @@
 <?php
 
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+session_start();
+date_default_timezone_set('Africa/Casablanca');
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use App\Controller\AuthController;
+$router = new Core\Router();
 
-// Get action from URL
-$action = $_GET['action'] ?? '';
+require_once __DIR__ . '/../routes/web.php';
 
-// Create controller
-$controller = new AuthController();
+$router->dispatch();
