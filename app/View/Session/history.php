@@ -23,7 +23,7 @@
                     <td><?= htmlspecialchars($s['name_table'] ?? '-') ?></td>
                     <td><?= htmlspecialchars($s['name_game'] ?? '-') ?></td>
                     <td><?= htmlspecialchars($s['name_user'] ?? '-') ?></td>
-                    <td><?= $s['duration'] ?></td>
+                    <td><?= $s['duration_minutes'] ?></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>

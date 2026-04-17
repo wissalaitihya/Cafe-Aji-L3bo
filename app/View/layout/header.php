@@ -8,7 +8,7 @@
 </head>
 <body>
     <nav class="navbar">
-        <a href="<?= BASE_PATH ?>/" class="logo">🎲 Aji L3bo</a>
+        <a href="<?= BASE_PATH ?>/games" class="logo">🎲 Aji L3bo</a>
         <div class="nav-links">
             <a href="<?= BASE_PATH ?>/games">Games</a>
 
