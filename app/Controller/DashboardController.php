@@ -5,6 +5,8 @@ namespace App\Controller;
 use App\Model\Game;
 use App\Model\Reservation;
 use App\Model\Session;
+use App\Model\Table;
+
 
 class DashboardController
 {
@@ -15,17 +17,23 @@ class DashboardController
         $gameModel = new Game();
         $reservationModel = new Reservation();
         $sessionModel = new Session();
+        $tableModel = new Table();
+
 
         $totalGames = count($gameModel->getAll());
         $todayReservations = $reservationModel->getTodayReservations();
         $allReservations = $reservationModel->getAll();
         $activeSessions = $sessionModel->getActive();
+        $tables = $tableModel->getAll();
+
 
         $this->render('dashboard/admin', [
             'totalGames'        => $totalGames,
             'todayReservations' => $todayReservations,
             'allReservations'   => $allReservations,
             'activeSessions'    => $activeSessions,
+            'tables'            => $tables,
+
         ]);
     }
 
