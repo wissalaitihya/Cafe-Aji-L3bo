@@ -1,16 +1,18 @@
 <?php
+
 namespace App\Controller;
+
 use App\Model\User;
 
-
 class AuthController
- {
-      public function loginForm()
+{
+    public function loginForm()
     {
         $error = $_GET['error'] ?? null;
         $success = $_GET['success'] ?? null;
         $this->render('auth/login', ['error' => $error, 'success' => $success]);
     }
+
     public function login()
     {
         $email = trim($_POST['email'] ?? '');
@@ -25,15 +27,10 @@ class AuthController
         $user->setEmail($email);
         $user->setPassword($password);
 
-            if ($password !== $password_confirm) {
-                header("Location: /View/auth/register.php?error=Les+mots+de+passe+ne+correspondent+pas");
-                exit();
-            }
-            $user = new User();
-            $user->setUsername($username);
-            $user->setEmail($email);
-            $user->setPassword($password);
-            $user->setRole('player');
+        if ($user->login()) {
+            $_SESSION['user_id'] = $user->getId();
+            $_SESSION['user_name'] = $user->getUsername();
+            $_SESSION['user_role'] = $user->getRole();
 
             if ($user->getRole() === 'admin') {
                 $this->redirect('/admin/dashboard');
@@ -112,4 +109,3 @@ class AuthController
         exit;
     }
 }
-?>
