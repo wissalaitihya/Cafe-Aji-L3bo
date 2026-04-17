@@ -1,8 +1,8 @@
 <?php require __DIR__ . '/../layout/header.php'; ?>
 
 <h1>Active Sessions</h1>
-<a href="/Cafe-Aji-L3bo/sessions/create" class="btn btn-success">+ Start Session</a>
-<a href="/Cafe-Aji-L3bo/sessions/history" class="btn btn-secondary">View History</a>
+<a href="<?= BASE_PATH ?>/sessions/create" class="btn btn-success">+ Start Session</a>
+<a href="<?= BASE_PATH ?>/sessions/history" class="btn btn-secondary">View History</a>
 
 <?php if (empty($sessions)): ?>
     <p>No active sessions right now.</p>
@@ -36,7 +36,7 @@
                         </span>
                     </td>
                     <td>
-                        <form action="/Cafe-Aji-L3bo/sessions/<?= $s['id_session'] ?>/end" method="POST" onsubmit="return confirm('End this session?')">
+                        <form action="<?= BASE_PATH ?>/sessions/<?= $s['id_session'] ?>/end" method="POST" onsubmit="return confirm('End this session?')">
                             <button type="submit" class="btn btn-small btn-danger">End</button>
                         </form>
                     </td>

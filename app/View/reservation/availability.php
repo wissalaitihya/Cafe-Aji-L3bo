@@ -2,7 +2,7 @@
 
 <h1>Check Table Availability</h1>
 
-<form action="/Cafe-Aji-L3bo/reservations/availability" method="GET" class="form-card">
+<form action="<?= BASE_PATH ?>/reservations/availability" method="GET" class="form-card">
     <div class="form-row">
         <div class="form-group">
             <label for="date">Date</label>
@@ -35,7 +35,7 @@
                     <tr>
                         <td><?= htmlspecialchars($table['name_table']) ?></td>
                         <td><?= $table['capacity'] ?> people</td>
-                        <td><a href="/Cafe-Aji-L3bo/reservations/create?id_table=<?= $table['id_table'] ?>&date=<?= urlencode($date) ?>&time=<?= urlencode($time) ?>" class="btn btn-small btn-success">Book</a></td>
+                        <td><a href="<?= BASE_PATH ?>/reservations/create?id_table=<?= $table['id_table'] ?>&date=<?= urlencode($date) ?>&time=<?= urlencode($time) ?>" class="btn btn-small btn-success">Book</a></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>

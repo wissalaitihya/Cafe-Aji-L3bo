@@ -32,10 +32,10 @@
 </div>
 
 <div class="quick-links">
-    <a href="/Cafe-Aji-L3bo/games" class="btn">Manage Games</a>
-    <a href="/Cafe-Aji-L3bo/reservations" class="btn">Manage Reservations</a>
-    <a href="/Cafe-Aji-L3bo/sessions" class="btn">Sessions Dashboard</a>
-    <a href="/Cafe-Aji-L3bo/sessions/create" class="btn btn-success">Start Session</a>
+    <a href="<?= BASE_PATH ?>/games" class="btn">Manage Games</a>
+    <a href="<?= BASE_PATH ?>/reservations" class="btn">Manage Reservations</a>
+    <a href="<?= BASE_PATH ?>/sessions" class="btn">Sessions Dashboard</a>
+    <a href="<?= BASE_PATH ?>/sessions/create" class="btn btn-success">Start Session</a>
 </div>
 
 <h2>All Reservations</h2>

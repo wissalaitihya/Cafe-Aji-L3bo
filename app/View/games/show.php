@@ -1,6 +1,6 @@
 <?php require __DIR__ . '/../layout/header.php'; ?>
 
-<a href="/Cafe-Aji-L3bo/games" class="btn btn-small">&larr; Back to Games</a>
+<a href="<?= BASE_PATH ?>/games" class="btn btn-small">&larr; Back to Games</a>
 
 <div class="detail-card">
     <h1><?= htmlspecialchars($game['name_game']) ?></h1>
@@ -21,8 +21,8 @@
 
     <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
         <div class="card-actions">
-            <a href="/Cafe-Aji-L3bo/games/<?= $game['id_game'] ?>/edit" class="btn btn-warning">Edit</a>
-            <form action="/Cafe-Aji-L3bo/games/<?= $game['id_game'] ?>/delete" method="POST" style="display:inline" onsubmit="return confirm('Delete this game?')">
+            <a href="<?= BASE_PATH ?>/games/<?= $game['id_game'] ?>/edit" class="btn btn-warning">Edit</a>
+            <form action="<?= BASE_PATH ?>/games/<?= $game['id_game'] ?>/delete" method="POST" style="display:inline" onsubmit="return confirm('Delete this game?')">
                 <button type="submit" class="btn btn-danger">Delete</button>
             </form>
         </div>

@@ -2,7 +2,7 @@
 require __DIR__ . '/../layout/header.php';
 ?>
 <h1>Create New Session</h1>
-<form action="/Cafe-Aji-L3bo/sessions" method="POST" class="form-card">
+<form action="<?= BASE_PATH ?>/sessions" method="POST" class="form-card">
     <div class="form-group">
         <label for="id_reservation">Reservation (optional)</label>
         <select id="id_reservation" name="id_reservation">
@@ -43,7 +43,7 @@ require __DIR__ . '/../layout/header.php';
     </div>
 
     <button type="submit" class="btn">Start Session</button>
-    <a href="/Cafe-Aji-L3bo/sessions" class="btn btn-secondary">Cancel</a>
+    <a href="<?= BASE_PATH ?>/sessions" class="btn btn-secondary">Cancel</a>
 </form>
 <script>
 document.getElementById('id_reservation').addEventListener('change', 

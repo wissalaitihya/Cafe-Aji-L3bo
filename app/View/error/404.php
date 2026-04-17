@@ -3,7 +3,7 @@
 <div class="error-page">
     <h1>404</h1>
     <p>Page not found</p>
-    <a href="/Cafe-Aji-L3bo/" class="btn">Go Home</a>
+    <a href="<?= BASE_PATH ?>/" class="btn">Go Home</a>
 </div>
 
 <?php require __DIR__ . '/../layout/footer.php'; ?>

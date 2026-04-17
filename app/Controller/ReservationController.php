@@ -235,7 +235,7 @@ class ReservationController
 
     private function redirect($url)
     {
-        header("Location: /Cafe-Aji-L3bo" . $url);
+        header("Location: " . BASE_PATH . $url);
         exit;
     }
 

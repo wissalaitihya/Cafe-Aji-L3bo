@@ -6,7 +6,7 @@
     <p class="alert alert-error"><?= htmlspecialchars($error) ?></p>
 <?php endif; ?>
 
-<form action="/Cafe-Aji-L3bo/games" method="POST" class="form-card">
+<form action="<?= BASE_PATH ?>/games" method="POST" class="form-card">
     <div class="form-group">
         <label for="name_game">Game Name</label>
         <input type="text" id="name_game" name="name_game" value="<?= htmlspecialchars($data['name_game'] ?? '') ?>" required>
@@ -56,7 +56,7 @@
     </div>
 
     <button type="submit" class="btn">Add Game</button>
-    <a href="/Cafe-Aji-L3bo/games" class="btn btn-secondary">Cancel</a>
+    <a href="<?= BASE_PATH ?>/games" class="btn btn-secondary">Cancel</a>
 </form>
 
 <?php require __DIR__ . '/../layout/footer.php'; ?>

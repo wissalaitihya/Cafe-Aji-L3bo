@@ -1,7 +1,7 @@
 <?php require __DIR__ . '/../layout/header.php'; ?>
 
 <h1>Session History</h1>
-<a href="/Cafe-Aji-L3bo/sessions" class="btn btn-secondary">&larr; Active Sessions</a>
+<a href="<?= BASE_PATH ?>/sessions" class="btn btn-secondary">&larr; Active Sessions</a>
 
 <?php if (empty($sessions)): ?>
     <p>No past sessions.</p>
