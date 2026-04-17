@@ -30,8 +30,9 @@
                     <td><?= htmlspecialchars($s['name_user'] ?? '-') ?></td>
                     <td><?= $s['start_time'] ?></td>
                     <td>
-                        <span class="badge badge-<?= $colorClass ?>">
-                            <?= floor($minutes / 60) ?>h <?= $minutes % 60 ?>m
+                        <span class="badge badge-<?= $colorClass ?> elapsed-badge"
+                         data-start="<?= htmlspecialchars($s['start_time']) ?>">
+                            <?= floor($minutes / 60) ?>h <?= $minutes % 60 ?>m 0s
                         </span>
                     </td>
                     <td>
@@ -44,5 +45,26 @@
         </tbody>
     </table>
 <?php endif; ?>
+<script>
+function updateElapsed() {
+    document.querySelectorAll('.elapsed-badge').forEach(function(badge) {
+        var start = new Date(badge.dataset.start.replace(' ', 'T'));
+        var now = new Date();
+        var diffMs = now - start;
+        if (diffMs < 0) diffMs = 0;
+        var totalSeconds = Math.floor(diffMs / 1000);
+        var totalMinutes = Math.floor(totalSeconds / 60);
+        var h = Math.floor(totalMinutes / 60);
+        var m = totalMinutes % 60;
+        var s = totalSeconds % 60;
 
+        badge.textContent = h + 'h ' + m + 'm ' + s + 's';
+        badge.className = 'badge elapsed-badge ' +
+            (totalMinutes < 60 ? 'badge-success' : totalMinutes < 120 ? 'badge-warning' : 'badge-danger');
+    });
+}
+
+updateElapsed();
+setInterval(updateElapsed, 1000);
+</script>
 <?php require __DIR__ . '/../layout/footer.php'; ?>
