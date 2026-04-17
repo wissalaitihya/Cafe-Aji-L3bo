@@ -1,3 +1,7 @@
 RewriteEngine On
+RewriteRule ^public/ - [L]
 RewriteRule ^$ public/ [L]
-RewriteRule (.*) public/$1 [L] 
+RewriteRule ^(.+.(css|js|map|png|jpg|jpeg|gif|ico|svg|webp|woff|woff2|ttf|eot))$ public/$1 [L,NC]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ public/index.php [QSA,L]
