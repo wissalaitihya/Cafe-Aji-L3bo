@@ -1,44 +1,12 @@
 <?php
 
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+session_start();
+date_default_timezone_set('Africa/Casablanca');
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use App\Controller\AuthController;
+$router = new Core\Router();
 
-// Get action from URL
-$action = $_GET['action'] ?? '';
+require_once __DIR__ . '/../routes/web.php';
 
-// Create controller
-$controller = new AuthController();
-
-// Routing
-switch ($action) {
-    case 'register':
-        $controller->register();
-        break;
-
-    case 'handleRegister':
-        $controller->handleRegister();
-        break;
-
-    case 'login':
-        $controller->login();
-        break;
-
-    case 'handleLogin':
-        $controller->handleLogin();
-        break;
-
-    case 'playerDashboard':
-          include __DIR__ . '/../app/View/dashboard/player.php';
-          break;
-
-    case 'adminDashboard':
-          include __DIR__ . '/../app/View/dashboard/admin.php';
-          break;
-
-    default:
-        echo "Home Page";
-}
+$router->dispatch();
