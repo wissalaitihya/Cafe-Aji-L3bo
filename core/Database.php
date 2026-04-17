@@ -1,26 +1,29 @@
 <?php
+namespace Core;
+
+use PDO;
+use PDOException;
+
 class Database {
     private static ?Database $instance = null;
     private PDO $pdo;
 
-    private string $host = "localhost";
-    private string $user = "root";
-    private string $pass = "";
-    private string $port = "3306";
-    private string $db   = "aji_l3bo_cafe";
-
     private function __construct() {
+
+        $config = require __DIR__ . '/../config/database.php';
+
         try {
             $this->pdo = new PDO(
-                "mysql:host={$this->host};port={$this->port};dbname={$this->db};charset=utf8mb4",
-                $this->user,
-                $this->pass,
+                "mysql:host={$config['host']};port={$config['port']};dbname={$config['dbname']};charset=utf8mb4",
+                $config['user'],
+                $config['pass'],
                 [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                     PDO::ATTR_EMULATE_PREPARES => false
                 ]
             );
+            echo "Database connection successful.";
         } catch (PDOException $e) {
             error_log("Database connection failed: " . $e->getMessage());
             die("Database connection error. Please try again later.");
@@ -38,4 +41,3 @@ class Database {
         return $this->pdo;
     }
 }
-?>

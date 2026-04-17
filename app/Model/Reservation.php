@@ -1,0 +1,292 @@
+<?php
+
+namespace App\Model;
+
+use Core\Database;
+class Reservation
+{
+    //  PDO instance (singleton from Database class)
+    private \PDO $pdo;
+
+    public function __construct()
+    {
+        $this->pdo = Database::getInstance()->getConnection();
+    }
+
+    //  1. getAll()
+
+    public function getAll(): array
+    {
+        $sql = "
+            SELECT
+                r.id_reservation,
+                r.people_count,
+                r.reservation_date,
+                r.reservation_time,
+                r.status_reservation,
+                u.id_user,
+                u.name_user,
+                u.phone_number,
+                t.id_table,
+                t.name_table,
+                t.capacity,
+                g.name_game
+            FROM reservations r
+            LEFT JOIN users  u ON r.id_user  = u.id_user
+            LEFT JOIN tables t ON r.id_table = t.id_table
+            LEFT JOIN games  g ON r.id_game  = g.id_game
+            ORDER BY r.reservation_date ASC, r.reservation_time ASC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    //  2. getById($id)
+    public function getById(int $id): ?array
+    {
+        $sql = "
+            SELECT
+                r.id_reservation,
+                r.people_count,
+                r.reservation_date,
+                r.reservation_time,
+                r.status_reservation,
+                u.id_user,
+                u.name_user,
+                u.phone_number,
+                t.id_table,
+                t.name_table,
+                t.capacity,
+                g.name_game
+            FROM reservations r
+            LEFT JOIN users  u ON r.id_user  = u.id_user
+            LEFT JOIN tables t ON r.id_table = t.id_table
+            LEFT JOIN games  g ON r.id_game  = g.id_game
+            WHERE r.id_reservation = :id
+            LIMIT 1
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':id', $id, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        // fetch() returns false when nothing found — normalize to null
+        return $result ?: null;
+    }
+
+    //  3. create($data)
+
+    public function create(array $data): bool
+    {
+        $idGame = !empty($data['id_game']) ? (int)$data['id_game'] : null;
+
+        $sql = "
+            INSERT INTO reservations
+                (id_user, id_table, id_game, people_count, reservation_date, reservation_time, status_reservation)
+            VALUES
+                (:id_user, :id_table, :id_game, :people_count, :reservation_date, :reservation_time, 'pending')
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindParam(':id_user',          $data['id_user'],          \PDO::PARAM_INT);
+        $stmt->bindParam(':id_table',         $data['id_table'],         \PDO::PARAM_INT);
+        $stmt->bindParam(':id_game',          $idGame,                   $idGame ? \PDO::PARAM_INT : \PDO::PARAM_NULL);
+        $stmt->bindParam(':people_count',     $data['people_count'],     \PDO::PARAM_INT);
+        $stmt->bindParam(':reservation_date', $data['reservation_date'], \PDO::PARAM_STR);
+        $stmt->bindParam(':reservation_time', $data['reservation_time'], \PDO::PARAM_STR);
+
+        return $stmt->execute();
+    }
+
+    //  4. updateStatus($id, $status)
+
+    public function updateStatus(int $id, string $status): bool
+    {
+        // Whitelist — never trust user input for ENUM values
+        $allowed = ['pending', 'confirmed', 'cancelled'];
+
+        if (!in_array($status, $allowed, true)) {
+            return false;
+        }
+
+        $sql = "
+            UPDATE reservations
+            SET    status_reservation = :status
+            WHERE  id_reservation     = :id
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':status', $status, \PDO::PARAM_STR);
+        $stmt->bindParam(':id',     $id,     \PDO::PARAM_INT);
+
+        return $stmt->execute();
+    }
+
+    //  5. getByDate($date)
+    public function getByDate(string $date): array
+    {
+        $sql = "
+            SELECT
+                r.id_reservation,
+                r.people_count,
+                r.reservation_date,
+                r.reservation_time,
+                r.status_reservation,
+                u.id_user,
+                u.name_user,
+                u.phone_number,
+                t.id_table,
+                t.name_table,
+                t.capacity,
+                g.name_game
+            FROM reservations r
+            LEFT JOIN users  u ON r.id_user  = u.id_user
+            LEFT JOIN tables t ON r.id_table = t.id_table
+            LEFT JOIN games  g ON r.id_game  = g.id_game
+            WHERE r.reservation_date = :date
+            ORDER BY r.reservation_time ASC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':date', $date, \PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    //  6. getByUserId($userId)
+    public function getByUserId(int $userId): array
+    {
+        $sql = "
+            SELECT
+                r.id_reservation,
+                r.people_count,
+                r.reservation_date,
+                r.reservation_time,
+                r.status_reservation,
+                t.id_table,
+                t.name_table,
+                t.capacity,
+                g.name_game
+            FROM reservations r
+            LEFT JOIN tables t ON r.id_table = t.id_table
+            LEFT JOIN games  g ON r.id_game  = g.id_game
+            WHERE r.id_user = :user_id
+            ORDER BY r.reservation_date DESC, r.reservation_time DESC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':user_id', $userId, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    //  7. checkAvailability($tableId, $date, $time)
+    public function checkAvailability(int $tableId, string $date, string $time): bool
+    {
+        $sql = "
+            SELECT COUNT(*) AS conflict_count
+            FROM   reservations r
+            LEFT JOIN games g ON r.id_game = g.id_game
+            WHERE  r.id_table            = :table_id
+              AND  r.reservation_date    = :date
+              AND  r.status_reservation != 'cancelled'
+              AND  :time < ADDTIME(r.reservation_time, SEC_TO_TIME(COALESCE(g.duration, 120) * 60))
+              AND  ADDTIME(:time2, SEC_TO_TIME(COALESCE(g.duration, 120) * 60)) > r.reservation_time
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':table_id', $tableId, \PDO::PARAM_INT);
+        $stmt->bindParam(':date',     $date,    \PDO::PARAM_STR);
+        $stmt->bindParam(':time',     $time,    \PDO::PARAM_STR);
+        $stmt->bindParam(':time2',    $time,    \PDO::PARAM_STR);
+        $stmt->execute();
+
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        return (int) $row['conflict_count'] === 0;
+    }
+
+    public function isDuplicate(int $userId, int $tableId, string $date, string $time): bool
+    {
+        $sql = "
+            SELECT COUNT(*) AS cnt
+            FROM   reservations
+            WHERE  id_user             = :user_id
+              AND  id_table            = :table_id
+              AND  reservation_date    = :date
+              AND  reservation_time    = :time
+              AND  status_reservation != 'cancelled'
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':user_id',  $userId,  \PDO::PARAM_INT);
+        $stmt->bindParam(':table_id', $tableId, \PDO::PARAM_INT);
+        $stmt->bindParam(':date',     $date,    \PDO::PARAM_STR);
+        $stmt->bindParam(':time',     $time,    \PDO::PARAM_STR);
+        $stmt->execute();
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return (int) $row['cnt'] > 0;
+    }
+
+    //  BONUS HELPERS
+    public function getTodayReservations(): array
+    {
+        return $this->getByDate(date('Y-m-d'));
+    }
+
+    public function countPending(): int
+    {
+        $sql = "
+            SELECT COUNT(*) AS total
+            FROM   reservations
+            WHERE  status_reservation = 'pending'
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        return (int) $row['total'];
+    }
+
+    public function getConfirmed(): array
+    {
+        $sql = "
+            SELECT
+                r.id_reservation,
+                r.id_game,
+                r.people_count,
+                r.reservation_date,
+                r.reservation_time,
+                u.name_user,
+                u.phone_number,
+                t.id_table,
+                t.name_table,
+                g.name_game
+            FROM reservations r
+            LEFT JOIN users  u ON r.id_user  = u.id_user
+            LEFT JOIN tables t ON r.id_table = t.id_table
+            LEFT JOIN games  g ON r.id_game  = g.id_game
+            WHERE r.status_reservation = 'confirmed'
+            ORDER BY r.reservation_date ASC, r.reservation_time ASC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public function lastInsertId(): string
+    {
+        return $this->pdo->lastInsertId();
+    }
+}

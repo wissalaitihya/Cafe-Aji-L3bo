@@ -32,6 +32,7 @@ aji-l3bo-cafe/
 │   │   ├── GameController.php
 │   │   ├── ReservationController.php
 │   │   ├── SessionController.php
+        ├── DashboardController.php
 │   │   └── AuthController.php
 │   │
 │   ├── Models/

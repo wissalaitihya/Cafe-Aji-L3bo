@@ -1,0 +1,9 @@
+{
+    "name": "team/aji-l3bo-cafe",
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Core\\": "core/"
+        }
+    }
+}
