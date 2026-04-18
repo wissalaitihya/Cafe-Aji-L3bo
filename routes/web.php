@@ -30,6 +30,15 @@ $router->get('/reservations/create', 'ReservationController@create');
 $router->post('/reservations', 'ReservationController@store');
 $router->get('/reservations/my', 'ReservationController@myReservations');
 $router->post('/reservations/{id}/status', 'ReservationController@updateStatus');
+$router->post('/reservations/{id}/cancel', 'ReservationController@cancelByPlayer');
+
+// ── Tables (admin CRUD) ──
+$router->get('/tables', 'TableController@index');
+$router->get('/tables/create', 'TableController@create');
+$router->post('/tables', 'TableController@store');
+$router->get('/tables/{id}/edit', 'TableController@edit');
+$router->post('/tables/{id}/update', 'TableController@update');
+$router->post('/tables/{id}/delete', 'TableController@destroy');
 
 // ── API: available tables & games for a date+time (AJAX) ──
 $router->get('/api/available-tables', 'ReservationController@apiAvailableTables');

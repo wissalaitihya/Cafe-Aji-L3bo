@@ -1,6 +1,13 @@
 # 🔹 Composer dependencies
 /vendor/
 
+# 🔹 Application code (private)
+/app/
+/public/
+
+# 🔹 Database credentials
+/config/database.php
+
 # 🔹 Logs
 /logs/
 /*.log
