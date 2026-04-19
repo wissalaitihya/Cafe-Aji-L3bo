@@ -14,18 +14,28 @@ class DashboardController
     {
         $this->requireAdmin();
 
-        $gameModel = new Game();
+        $gameModel        = new Game();
         $reservationModel = new Reservation();
-        $sessionModel = new Session();
-        $tableModel = new Table();
+        $sessionModel     = new Session();
+        $tableModel       = new Table();
 
-
-        $totalGames = count($gameModel->getAll());
+        $totalGames        = count($gameModel->getAll());
         $todayReservations = $reservationModel->getTodayReservations();
-        $allReservations = $reservationModel->getAll();
-        $activeSessions = $sessionModel->getActive();
-        $tables = $tableModel->getAll();
+        $allReservations   = $reservationModel->getAll();
+        $activeSessions    = $sessionModel->getActive();
+        $tables            = $tableModel->getAll();
+        $gameStats         = $gameModel->getStats();
+        $tableStats        = $tableModel->getStats();
+        $monthStats        = $reservationModel->getMonthStats();
+        $pendingCount      = $reservationModel->countPending();
+        $confirmedCount    = $reservationModel->countConfirmed();
+        $cancelledCount    = $reservationModel->countCancelled();
 
+        // Games currently in use (for "Now Playing" section)
+        $allGames   = $gameModel->getAll();
+        $inUseGames = array_values(array_filter($allGames, function($g) {
+            return $g['status_game'] === 'in_use';
+        }));
 
         $this->render('dashboard/admin', [
             'totalGames'        => $totalGames,
@@ -33,7 +43,13 @@ class DashboardController
             'allReservations'   => $allReservations,
             'activeSessions'    => $activeSessions,
             'tables'            => $tables,
-
+            'gameStats'         => $gameStats,
+            'tableStats'        => $tableStats,
+            'monthStats'        => $monthStats,
+            'pendingCount'      => $pendingCount,
+            'confirmedCount'    => $confirmedCount,
+            'cancelledCount'    => $cancelledCount,
+            'inUseGames'        => $inUseGames,
         ]);
     }
 
@@ -42,11 +58,15 @@ class DashboardController
         $this->requireLogin();
 
         $reservationModel = new Reservation();
+        $gameModel        = new Game();
+
         $myReservations = $reservationModel->getByUserId($_SESSION['user_id']);
+        $featuredGames  = array_slice($gameModel->getAvailable(), 0, 4);
 
         $this->render('dashboard/player', [
             'myReservations' => $myReservations,
             'userName'       => $_SESSION['user_name'] ?? 'Player',
+            'featuredGames'  => $featuredGames,
         ]);
     }
 

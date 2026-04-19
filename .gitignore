@@ -5,6 +5,9 @@
 /app/
 /public/
 
+# 🔹 Database credentials
+/config/database.php
+
 # 🔹 Logs
 /logs/
 /*.log

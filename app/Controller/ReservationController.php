@@ -14,9 +14,23 @@ class ReservationController
         $this->requireAdmin();
 
         $reservationModel = new Reservation();
-        $reservations = $reservationModel->getAll();
+        $sessionModel     = new \App\Model\Session();
 
-        $this->render('reservation/index', ['reservations' => $reservations]);
+        $reservations   = $reservationModel->getAll();
+        $activeSessions = $sessionModel->getActive();
+
+        // Build a map: id_reservation => session row
+        $sessionsByReservation = [];
+        foreach ($activeSessions as $s) {
+            if (!empty($s['id_reservation'])) {
+                $sessionsByReservation[(int)$s['id_reservation']] = $s;
+            }
+        }
+
+        $this->render('reservation/index', [
+            'reservations'          => $reservations,
+            'sessionsByReservation' => $sessionsByReservation,
+        ]);
     }
 
     // Show booking form
@@ -24,23 +38,41 @@ class ReservationController
     {
         $this->requireLogin();
 
+        // Non-admin players: block if they already have an active/upcoming reservation
+        if (!$this->isAdmin()) {
+            $reservationModel = new Reservation();
+            $existing = $reservationModel->getActiveReservationForUser((int)$_SESSION['user_id']);
+            if ($existing) {
+                $tableModel = new Table();
+                $gameModel  = new Game();
+                $this->render('reservation/create', [
+                    'tables'       => [],
+                    'games'        => $gameModel->getAvailable(),
+                    'prefill'      => [],
+                    'blockBooking' => true,
+                    'existingRes'  => $existing,
+                ]);
+                return;
+            }
+        }
+
         $date    = $_GET['date'] ?? '';
         $time    = $_GET['time'] ?? '';
+        $endTime = $_GET['end_time'] ?? '';
         $tableId = $_GET['id_table'] ?? '';
 
         $tableModel = new Table();
-        $gameModel = new Game();
+        $gameModel  = new Game();
 
-        // Show only available tables when date+time are known
         if ($date && $time) {
-            $tables = $tableModel->getAvailableForSlot($date, $time);
+            $et     = $endTime ?: date('H:i', strtotime($time) + 7200);
+            $tables = $tableModel->getAvailableForSlot($date, $time, $et);
             $games  = $gameModel->getAvailableForSlot($date, $time);
         } else {
             $tables = $tableModel->getAll();
             $games  = $gameModel->getAvailable();
         }
 
-        // Find capacity of selected table for people_count default
         $peoplePrefill = '';
         if ($tableId) {
             foreach ($tables as $t) {
@@ -58,6 +90,7 @@ class ReservationController
                 'id_table'     => $tableId,
                 'date'         => $date,
                 'time'         => $time,
+                'end_time'     => $endTime,
                 'people_count' => $peoplePrefill,
             ],
         ]);
@@ -69,12 +102,13 @@ class ReservationController
         $this->requireLogin();
 
         $data = [
-            'id_user'          => $_SESSION['user_id'],
-            'id_table'         => (int)($_POST['id_table'] ?? 0),
-            'id_game'          => (int)($_POST['id_game'] ?? 0),
-            'people_count'     => (int)($_POST['people_count'] ?? 1),
-            'reservation_date' => $_POST['reservation_date'] ?? '',
-            'reservation_time' => $_POST['reservation_time'] ?? '',
+            'id_user'               => $_SESSION['user_id'],
+            'id_table'              => (int)($_POST['id_table'] ?? 0),
+            'id_game'               => (int)($_POST['id_game'] ?? 0),
+            'people_count'          => (int)($_POST['people_count'] ?? 1),
+            'reservation_date'      => $_POST['reservation_date'] ?? '',
+            'reservation_time'      => $_POST['reservation_time'] ?? '',
+            'reservation_end_time'  => $_POST['reservation_end_time'] ?? '',
         ];
 
         $prefill = [
@@ -96,7 +130,64 @@ class ReservationController
             return;
         }
 
+        // Validate people count vs game min/max
+        if (!empty($data['id_game'])) {
+            $gameModel = new Game();
+            $game = $gameModel->getById($data['id_game']);
+            if ($game) {
+                if ($data['people_count'] < $game['players_min']) {
+                    $tableModel = new Table();
+                    $this->render('reservation/create', [
+                        'error'   => 'This game requires at least ' . $game['players_min'] . ' players. You entered ' . $data['people_count'] . '.',
+                        'tables'  => $tableModel->getAll(),
+                        'games'   => $gameModel->getAvailable(),
+                        'prefill' => $prefill,
+                    ]);
+                    return;
+                }
+                if ($data['people_count'] > $game['players_max']) {
+                    $tableModel = new Table();
+                    $this->render('reservation/create', [
+                        'error'   => 'This game supports max ' . $game['players_max'] . ' players. You entered ' . $data['people_count'] . '.',
+                        'tables'  => $tableModel->getAll(),
+                        'games'   => $gameModel->getAvailable(),
+                        'prefill' => $prefill,
+                    ]);
+                    return;
+                }
+            }
+        }
+
+        // Validate people count vs table capacity
+        $tableModel = new Table();
+        $table = $tableModel->getById($data['id_table']);
+        if ($table && $data['people_count'] > $table['capacity']) {
+            $gameModel = new Game();
+            $this->render('reservation/create', [
+                'error'   => 'Table "' . $table['name_table'] . '" only seats ' . $table['capacity'] . ' people. Your group has ' . $data['people_count'] . '.',
+                'tables'  => $tableModel->getAll(),
+                'games'   => $gameModel->getAvailable(),
+                'prefill' => $prefill,
+            ]);
+            return;
+        }
+
         $reservationModel = new Reservation();
+
+        // Non-admin: enforce one active reservation at a time
+        if (!$this->isAdmin()) {
+            if ($reservationModel->hasActiveReservation((int)$_SESSION['user_id'])) {
+                $existing = $reservationModel->getActiveReservationForUser((int)$_SESSION['user_id']);
+                $this->render('reservation/create', [
+                    'tables'       => [],
+                    'games'        => (new Game())->getAvailable(),
+                    'prefill'      => [],
+                    'blockBooking' => true,
+                    'existingRes'  => $existing,
+                ]);
+                return;
+            }
+        }
 
         // Prevent duplicate submission
         if ($reservationModel->isDuplicate($data['id_user'], $data['id_table'], $data['reservation_date'], $data['reservation_time'])) {
@@ -177,7 +268,49 @@ class ReservationController
         $reservationModel = new Reservation();
         $reservationModel->updateStatus($id, $status);
 
+        // Re-sync table statuses after any status change
+        (new Table())->syncStatuses();
+
         $this->redirect('/reservations');
+    }
+
+    // Player: cancel their own pending or confirmed reservation
+    public function cancelByPlayer($id)
+    {
+        $this->requireLogin();
+
+        $reservationModel = new Reservation();
+        $reservation = $reservationModel->getById((int)$id);
+
+        // Security: only the owner can cancel
+        if (!$reservation || (int)$reservation['id_user'] !== (int)$_SESSION['user_id']) {
+            $this->redirect('/reservations/my');
+            return;
+        }
+
+        $status = $reservation['status_reservation'];
+
+        // Only pending or confirmed can be cancelled
+        if (!in_array($status, ['pending', 'confirmed'], true)) {
+            $this->redirect('/reservations/my');
+            return;
+        }
+
+        // If confirmed, block cancellation if a session has already started on this reservation
+        if ($status === 'confirmed') {
+            $sessionModel = new \App\Model\Session();
+            $activeSession = $sessionModel->getActiveByReservationId((int)$id);
+            if ($activeSession) {
+                // Session already started — cannot cancel
+                $this->redirect('/reservations/my?error=session_started');
+                return;
+            }
+        }
+
+        $reservationModel->updateStatus((int)$id, 'cancelled');
+        (new Table())->syncStatuses();
+
+        $this->redirect('/reservations/my?cancelled=1');
     }
 
     // ── API: return available tables as JSON ──
@@ -187,8 +320,9 @@ class ReservationController
 
         header('Content-Type: application/json');
 
-        $date = $_GET['date'] ?? '';
-        $time = $_GET['time'] ?? '';
+        $date    = $_GET['date'] ?? '';
+        $time    = $_GET['time'] ?? '';
+        $endTime = $_GET['end_time'] ?? '';
 
         if (empty($date) || empty($time)) {
             echo json_encode([]);
@@ -196,11 +330,23 @@ class ReservationController
         }
 
         $tableModel = new Table();
-        $tables = $tableModel->getAvailableForSlot($date, $time);
+        $gameModel  = new Game();
+
+        // If a game_id is provided filter tables by that game's min/max capacity
+        $gameId = (int)($_GET['game_id'] ?? 0);
+        $minCap = null;
+        $maxCap = null;
+        if ($gameId > 0) {
+            $game = $gameModel->getById($gameId);
+            if ($game) {
+                $minCap = (int)$game['players_min'];
+                $maxCap = (int)$game['players_max'];
+            }
+        }
+
+        $tables = $tableModel->getAvailableForSlot($date, $time, $endTime, $minCap, $maxCap);
         echo json_encode($tables);
     }
-
-    // ── API: return available games as JSON ──
     public function apiAvailableGames()
     {
         $this->requireLogin();

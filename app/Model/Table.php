@@ -34,23 +34,40 @@ class Table
         }
     }
 
-    public function getAvailableForSlot(string $date, string $time): array
+    public function getAvailableForSlot(string $date, string $startTime, string $endTime = '', ?int $minCapacity = null, ?int $maxCapacity = null): array
     {
         try {
+            if (empty($endTime)) {
+                $endTime = date('H:i:s', strtotime($startTime) + 7200);
+            }
+            $capacityFilter = '';
+            if ($minCapacity !== null) {
+                $capacityFilter .= ' AND t.capacity >= :min_cap';
+            }
+            if ($maxCapacity !== null) {
+                $capacityFilter .= ' AND t.capacity <= :max_cap';
+            }
             $sql = "
-                SELECT * FROM tables t
+                SELECT t.*
+                FROM tables t
                 WHERE t.id_table NOT IN (
                     SELECT r.id_table FROM reservations r
-                    LEFT JOIN games g ON r.id_game = g.id_game
                     WHERE r.reservation_date    = :date
                       AND r.status_reservation != 'cancelled'
-                      AND :time < ADDTIME(r.reservation_time, SEC_TO_TIME(COALESCE(g.duration, 120) * 60))
-                      AND ADDTIME(:time2, SEC_TO_TIME(COALESCE(g.duration, 120) * 60)) > r.reservation_time
-                )
-                ORDER BY t.id_table ASC
+                      AND :start_time < r.reservation_end_time
+                      AND :end_time   > r.reservation_time
+                ){$capacityFilter}
+                ORDER BY t.capacity ASC, t.id_table ASC
             ";
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([':date' => $date, ':time' => $time, ':time2' => $time]);
+            $params = [
+                ':date'       => $date,
+                ':start_time' => $startTime,
+                ':end_time'   => $endTime,
+            ];
+            if ($minCapacity !== null) $params[':min_cap'] = $minCapacity;
+            if ($maxCapacity !== null) $params[':max_cap'] = $maxCapacity;
+            $stmt->execute($params);
             return $stmt->fetchAll();
         } catch (\PDOException $e) {
             return [];
@@ -80,6 +97,121 @@ class Table
             return $result ?: null;
         } catch (\PDOException $e) {
             return null;
+        }
+    }
+
+    /**
+     * Auto-sync status_table for all tables based on:
+     *  - 'occupied' if there is an active session on the table, OR
+     *    a confirmed reservation that is in progress right now today.
+     *  - 'free' for everything else.
+     * Call this whenever the state may have changed.
+     */
+    public function syncStatuses(): void
+    {
+        try {
+            // 1. Occupied: active session exists for table
+            $this->pdo->exec("
+                UPDATE tables SET status_table = 'occupied'
+                WHERE id_table IN (
+                    SELECT id_table FROM sessions WHERE status_session = 'active'
+                )
+            ");
+            // 2. Occupied: confirmed reservation happening right now
+            $this->pdo->exec("
+                UPDATE tables SET status_table = 'occupied'
+                WHERE id_table IN (
+                    SELECT id_table FROM reservations
+                    WHERE status_reservation = 'confirmed'
+                      AND reservation_date = CURDATE()
+                      AND CURTIME() BETWEEN reservation_time AND reservation_end_time
+                )
+            ");
+            // 3. Free: no active session AND no current reservation
+            $this->pdo->exec("
+                UPDATE tables SET status_table = 'free'
+                WHERE id_table NOT IN (
+                    SELECT id_table FROM sessions WHERE status_session = 'active'
+                )
+                AND id_table NOT IN (
+                    SELECT id_table FROM reservations
+                    WHERE status_reservation = 'confirmed'
+                      AND reservation_date = CURDATE()
+                      AND CURTIME() BETWEEN reservation_time AND reservation_end_time
+                )
+            ");
+        } catch (\PDOException $e) {
+            // fail silently — status_table is visual only
+        }
+    }
+
+    public function create(array $data): bool
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                "INSERT INTO tables (name_table, capacity, status_table) VALUES (:name, :capacity, :status)"
+            );
+            return $stmt->execute([
+                ':name'     => $data['name_table'],
+                ':capacity' => $data['capacity'],
+                ':status'   => $data['status_table'] ?? 'free',
+            ]);
+        } catch (\PDOException $e) {
+            return false;
+        }
+    }
+
+    public function update(int $id, array $data): bool
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                "UPDATE tables SET name_table = :name, capacity = :capacity, status_table = :status WHERE id_table = :id"
+            );
+            return $stmt->execute([
+                ':name'     => $data['name_table'],
+                ':capacity' => $data['capacity'],
+                ':status'   => $data['status_table'] ?? 'free',
+                ':id'       => $id,
+            ]);
+        } catch (\PDOException $e) {
+            return false;
+        }
+    }
+
+    public function delete(int $id): bool
+    {
+        try {
+            $stmt = $this->pdo->prepare("DELETE FROM tables WHERE id_table = :id");
+            return $stmt->execute([':id' => $id]);
+        } catch (\PDOException $e) {
+            return false;
+        }
+    }
+
+    public function getStats(): array
+    {
+        try {
+            $all      = $this->getAll();
+            $total    = count($all);
+            $occupied = count(array_filter($all, fn($t) => $t['status_table'] === 'occupied'));
+            $free     = $total - $occupied;
+
+            // Most used table by confirmed reservations
+            $mostUsed = null;
+            try {
+                $row = $this->pdo->query(
+                    "SELECT t.name_table, COUNT(*) AS cnt
+                     FROM reservations r
+                     JOIN tables t ON r.id_table = t.id_table
+                     WHERE r.status_reservation = 'confirmed'
+                     GROUP BY r.id_table ORDER BY cnt DESC LIMIT 1"
+                )->fetch(\PDO::FETCH_ASSOC);
+                if ($row) $mostUsed = $row;
+            } catch (\PDOException $e) {}
+
+            return ['total' => $total, 'occupied' => $occupied, 'free' => $free, 'mostUsed' => $mostUsed];
+        } catch (\PDOException $e) {
+            return ['total' => 0, 'occupied' => 0, 'free' => 0, 'mostUsed' => null];
         }
     }
 }

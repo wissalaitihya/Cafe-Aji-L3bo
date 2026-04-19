@@ -20,9 +20,18 @@
                 <h3><?= htmlspecialchars($t['name_table']) ?></h3>
                 <p><strong>Capacity:</strong> <?= $t['capacity'] ?> players</p>
                 <span class="badge badge-<?= $t['status_table'] === 'free' ? 'success' : 'danger' ?>">
-                    <?= $t['status_table'] ?>
+                    <?= $t['status_table'] === 'free' ? '&#10003; Free' : '&#9679; Occupied' ?>
                 </span>
                 <div class="card-actions">
+                    <?php if ($t['status_table'] === 'occupied'): ?>
+                        <form action="<?= BASE_PATH ?>/tables/<?= $t['id_table'] ?>/free" method="POST"
+                              style="display:inline"
+                              onsubmit="return confirm('Mark <?= htmlspecialchars($t['name_table']) ?> as free? This will end any active session on this table.')">
+                            <button type="submit" class="btn btn-small btn-success" title="Players left early — release this table">
+                                &#10003; Set Free
+                            </button>
+                        </form>
+                    <?php endif; ?>
                     <a href="<?= BASE_PATH ?>/tables/<?= $t['id_table'] ?>/edit" class="btn btn-small btn-warning">&#9998; Edit</a>
                     <form action="<?= BASE_PATH ?>/tables/<?= $t['id_table'] ?>/delete" method="POST"
                           style="display:inline" onsubmit="return confirm('Delete table <?= htmlspecialchars($t['name_table']) ?>?')">

@@ -15,6 +15,9 @@ class SessionController
         $this->requireAdmin();
 
         $sessionModel = new Session();
+        $tableModel   = new Table();
+        $sessionModel->autoEndOverdue();
+        $tableModel->syncStatuses();
         $sessions = $sessionModel->getActive();
 
         $this->render('Session/dashboard', ['sessions' => $sessions]);
@@ -33,10 +36,19 @@ class SessionController
         $tables = $tableModel->getAll();
         $reservations = $reservationModel->getConfirmed();
 
+        // Build map: id_reservation => [game_id, ...] so the view can filter game select
+        $gamesByReservation = [];
+        foreach ($reservations as $r) {
+            if (!empty($r['id_game'])) {
+                $gamesByReservation[(int)$r['id_reservation']] = [(int)$r['id_game']];
+            }
+        }
+
         $this->render('Session/create', [
-            'games'        => $games,
-            'tables'       => $tables,
-            'reservations' => $reservations,
+            'games'              => $games,
+            'tables'             => $tables,
+            'reservations'       => $reservations,
+            'gamesByReservation' => $gamesByReservation,
         ]);
     }
     public function store()
@@ -58,8 +70,11 @@ class SessionController
         $tableModel = new Table();
 
         if ($sessionModel->create($data)) {
-            // Mark table as occupied
+            // Mark table as occupied + game as in_use
             $tableModel->setStatus($data['id_table'], 'occupied');
+            if (!empty($data['id_game'])) {
+                (new Game())->setStatus($data['id_game'], 'in_use');
+            }
             $this->redirect('/sessions');
         } else {
             $this->redirect('/sessions/create');
@@ -75,9 +90,12 @@ class SessionController
 
         if ($session) {
             $sessionModel->endSession($id);
-            // Free the table
+            // Free the table + mark game available
             $tableModel = new Table();
             $tableModel->setStatus($session['id_table'], 'free');
+            if (!empty($session['id_game'])) {
+                (new Game())->setStatus($session['id_game'], 'available');
+            }
         }
 
         $this->redirect('/sessions');

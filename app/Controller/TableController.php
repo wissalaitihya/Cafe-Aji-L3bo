@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Model\Table;
+use App\Model\Session;
 
 class TableController
 {
@@ -11,6 +12,7 @@ class TableController
         $this->requireAdmin();
 
         $tableModel = new Table();
+        $tableModel->syncStatuses();
         $tables = $tableModel->getAll();
 
         $this->render('tables/index', ['tables' => $tables]);
@@ -115,6 +117,30 @@ class TableController
 
         $tableModel = new Table();
         $tableModel->delete((int)$id);
+        $this->redirect('/tables');
+    }
+
+    /**
+     * Admin: force-free a table (players left early).
+     * Ends any active session on the table and sets status to free.
+     */
+    public function setFree($id)
+    {
+        $this->requireAdmin();
+
+        $id = (int)$id;
+        $sessionModel = new Session();
+        $tableModel   = new Table();
+
+        // End any running session tied to this table
+        $activeSession = $sessionModel->getActiveByTableId($id);
+        if ($activeSession) {
+            $sessionModel->endSession((int)$activeSession['id_session']);
+        }
+
+        // Force status to free
+        $tableModel->setStatus($id, 'free');
+
         $this->redirect('/tables');
     }
 

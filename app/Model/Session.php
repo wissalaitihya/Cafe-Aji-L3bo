@@ -13,10 +13,45 @@ private PDO $pdo;
         $this->pdo = Database::getInstance()->getConnection();
     }
 
+    public function autoEndOverdue(): int
+    {
+        try {
+            // End any active session whose reservation end_time has passed today
+            $sql = "
+                UPDATE sessions s
+                JOIN reservations r ON s.id_reservation = r.id_reservation
+                SET s.end_time = NOW(), s.status_session = 'finished'
+                WHERE s.status_session = 'active'
+                  AND r.reservation_date = CURDATE()
+                  AND CURTIME() > r.reservation_end_time
+            ";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            $count = $stmt->rowCount();
+
+            // Also free tables for those sessions
+            if ($count > 0) {
+                $this->pdo->exec("
+                    UPDATE tables t
+                    JOIN sessions s ON s.id_table = t.id_table
+                    SET t.status_table = 'free'
+                    WHERE s.status_session = 'finished'
+                      AND s.end_time >= NOW() - INTERVAL 5 SECOND
+                ");
+            }
+
+            return $count;
+        } catch (\PDOException $e) {
+            return 0;
+        }
+    }
+
     public function getActive() {
          try {
             $sql = "SELECT s.*, g.name_game, t.name_table, u.name_user,
-                    TIMESTAMPDIFF(MINUTE, s.start_time, NOW()) AS elapsed_minutes
+                    TIMESTAMPDIFF(MINUTE, s.start_time, NOW()) AS elapsed_minutes,
+                    r.reservation_date,
+                    r.reservation_end_time
                     FROM sessions s
                     LEFT JOIN games g ON s.id_game = g.id_game
                     LEFT JOIN tables t ON s.id_table = t.id_table
@@ -89,6 +124,49 @@ private PDO $pdo;
             return (int) $stmt->fetch()['total'];
         } catch (\PDOException $e) {
             return 0;
+        }
+    }
+
+    public function getActiveByTableId(int $tableId): ?array
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT * FROM sessions WHERE id_table = :id AND status_session = 'active' LIMIT 1"
+            );
+            $stmt->execute([':id' => $tableId]);
+            $result = $stmt->fetch();
+            return $result ?: null;
+        } catch (\PDOException $e) {
+            return null;
+        }
+    }
+
+    public function getActiveByReservationId(int $reservationId): ?array
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT * FROM sessions WHERE id_reservation = :id AND status_session = 'active' LIMIT 1"
+            );
+            $stmt->execute([':id' => $reservationId]);
+            $result = $stmt->fetch();
+            return $result ?: null;
+        } catch (\PDOException $e) {
+            return null;
+        }
+    }
+
+    public function getFinishedStats(): array
+    {
+        try {
+            $total = (int)$this->pdo
+                ->query("SELECT COUNT(*) FROM sessions WHERE status_session = 'finished'")
+                ->fetchColumn();
+            $avg = (float)($this->pdo
+                ->query("SELECT COALESCE(AVG(TIMESTAMPDIFF(MINUTE, start_time, end_time)),0) FROM sessions WHERE status_session = 'finished' AND end_time IS NOT NULL")
+                ->fetchColumn() ?? 0);
+            return ['total' => $total, 'avg_minutes' => round($avg)];
+        } catch (\PDOException $e) {
+            return ['total' => 0, 'avg_minutes' => 0];
         }
     }
 }
