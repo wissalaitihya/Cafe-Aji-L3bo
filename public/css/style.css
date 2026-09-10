@@ -2703,7 +2703,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     display: flex;
     align-items: center;
     background:
-        linear-gradient(90deg, rgba(37, 30, 26, 0.92) 0%, rgba(37, 30, 26, 0.72) 44%, rgba(37, 30, 26, 0.18) 100%),
+        linear-gradient(90deg, rgba(16, 55, 57, 0.94) 0%, rgba(20, 73, 72, 0.78) 44%, rgba(20, 73, 72, 0.18) 100%),
         url('https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=1800&q=88') center / cover;
     border: 0;
     box-shadow: 0 18px 42px rgba(46, 41, 37, 0.18);
@@ -2711,7 +2711,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .catalogue-hero .hero-inner { width: 100%; }
 .catalogue-hero .hero-copy { max-width: 570px; }
 .catalogue-hero .hero-title, .catalogue-hero .hero-sub, .catalogue-hero .hero-eyebrow { color: #fffaf3; }
-.catalogue-hero .hero-title-accent { color: #f3b27f; -webkit-text-fill-color: #f3b27f; }
+.catalogue-hero .hero-title-accent {
+    background: linear-gradient(90deg, #a855f7 0%, #06d6f5 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
 .catalogue-hero .hero-sub { color: rgba(255, 250, 243, 0.78); }
 .catalogue-hero .hero-eyebrow { background: rgba(255, 250, 243, 0.12); border-color: rgba(255, 250, 243, 0.22); }
 .catalogue-hero .hero-stats { border-top-color: rgba(255, 250, 243, 0.2); }
@@ -2775,12 +2781,46 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
    FINAL PUBLIC-PAGE POLISH
    ============================================================ */
 .catalogue-hero .hero-copy { padding-block: 1.5rem; }
-.catalogue-hero .hero-title { max-width: 8ch; font-size: clamp(3.2rem, 7vw, 5.7rem); line-height: 0.92; }
+.catalogue-hero .hero-title { max-width: 8ch; font-size: clamp(3.2rem, 7vw, 5.7rem); line-height: 0.92; text-shadow: 0 8px 24px rgba(4, 30, 31, 0.24); }
 .catalogue-hero .hero-sub { max-width: 42ch; margin-top: 1.5rem; font-size: 1.05rem; line-height: 1.7; }
 .catalogue-hero .hero-actions { margin-top: 1.75rem; }
-.catalogue-hero .hero-stats { gap: clamp(1.25rem, 4vw, 2.75rem); margin-top: 2.75rem; }
+.catalogue-hero .hero-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(1rem, 3vw, 2.75rem); margin-top: 2.75rem; }
 .catalogue-hero .hero-stat-num { font-size: 1.85rem; }
 .catalogue-hero .hero-stat-label { letter-spacing: 0.05em; }
+
+.profile-trigger {
+    width: 100%;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    background: transparent;
+}
+.profile-trigger:hover { background: rgba(217, 101, 69, 0.12); }
+.profile-chevron { margin-left: auto; color: rgba(255, 247, 237, 0.55); font-size: 1.25rem; transition: transform 0.2s; }
+.profile-trigger[aria-expanded="true"] .profile-chevron { transform: rotate(90deg); }
+.profile-popover {
+    position: absolute;
+    left: 0.8rem;
+    right: 0.8rem;
+    bottom: 7.2rem;
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(255, 253, 249, 0.16);
+    border-radius: 10px;
+    background: #fffdf9;
+    color: var(--text-primary);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+.profile-popover[hidden] { display: none; }
+.profile-popover-kicker { color: var(--text-muted); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; }
+.profile-popover strong { font-size: 0.95rem; }
+.profile-popover > span:not(.profile-popover-kicker) { color: var(--text-secondary); font-size: 0.78rem; }
+.profile-popover a { margin-top: 0.45rem; font-size: 0.78rem; font-weight: 700; }
 
 .game-image-link { display: block; width: 100%; height: 100%; }
 .game-image-link:focus-visible { outline: 3px solid #fffaf3; outline-offset: -5px; position: relative; z-index: 2; }
@@ -2809,7 +2849,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     .detail-page-header .btn-back { align-self: flex-start; }
     .detail-page-title { order: -1; white-space: normal; text-align: left; }
     .catalogue-hero .hero-title { font-size: clamp(3rem, 15vw, 4.6rem); }
-    .catalogue-hero .hero-stats { margin-top: 2rem; }
+    .catalogue-hero .hero-stats { grid-template-columns: repeat(4, minmax(105px, 1fr)); margin-top: 2rem; overflow-x: auto; padding-bottom: 0.35rem; }
 }
 
 @media (max-width: 800px) {

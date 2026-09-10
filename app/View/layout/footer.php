@@ -64,6 +64,24 @@
             }
         });
     }
+
+    /* Profile popover uses the existing session identity without adding a backend route. */
+    var profileTrigger = document.getElementById('profile-trigger');
+    var profilePopover = document.getElementById('profile-popover');
+    if (profileTrigger && profilePopover) {
+        profileTrigger.addEventListener('click', function() {
+            var open = profilePopover.hasAttribute('hidden');
+            if (open) profilePopover.removeAttribute('hidden');
+            else profilePopover.setAttribute('hidden', '');
+            profileTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        document.addEventListener('click', function(e) {
+            if (!profilePopover.hasAttribute('hidden') && !profilePopover.contains(e.target) && !profileTrigger.contains(e.target)) {
+                profilePopover.setAttribute('hidden', '');
+                profileTrigger.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
 }());
 </script>
 </body>
