@@ -352,6 +352,30 @@ a:hover { color: var(--purple-bright); }
 .public-content:has(.search-bar) {
     max-width: none;
 }
+/* Player dashboard, my reservations, and booking form: full width */
+.content.page-full {
+    max-width: none;
+}
+/* Center the reservation booking form */
+.content.page-form-center .form-card {
+    margin-left: auto;
+    margin-right: auto;
+}
+.content.page-form-center .page-header {
+    justify-content: center;
+    text-align: center;
+}
+
+/* ── Page header (h1 + action button row) ── */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+.page-header h1 { margin: 0; }
 /* keep .container working as alias */
 .container { padding: 2rem 2.5rem 4rem; }
 

@@ -17,6 +17,18 @@
     function nav_active(string $seg, string $cp): string {
         return (strpos($cp, $seg) !== false) ? ' active' : '';
     }
+    $mainPageClass = '';
+    if ($userRole !== 'guest') {
+        if (in_array($cp, [BASE_PATH . '/player/dashboard', BASE_PATH . '/reservations/my', BASE_PATH . '/reservations/create'], true)
+            || str_ends_with($cp, '/player/dashboard')
+            || str_ends_with($cp, '/reservations/my')
+            || str_ends_with($cp, '/reservations/create')) {
+            $mainPageClass = ' page-full';
+        }
+        if (str_ends_with($cp, '/reservations/create')) {
+            $mainPageClass .= ' page-form-center';
+        }
+    }
 ?>
 
 <?php if ($userRole === 'guest'): ?>
@@ -81,5 +93,5 @@
             <span class="topbar-logo-mobile"><a href="<?= $logoHref ?>">🎲 Aji L3bo</a></span>
             <span class="topbar-user">👤 <?= htmlspecialchars($_SESSION['user_name'] ?? '') ?></span>
         </header>
-        <main class="content">
+        <main class="content<?= $mainPageClass ?>">
 <?php endif; ?>

@@ -8,7 +8,7 @@
 <?php require __DIR__ . '/../layout/header.php'; ?>
 
 <div class="page-header">
-    <h1>&#128197; Book a Table</h1>
+    <h1>&#128197; <?= (!empty($blockBooking) && !empty($existingRes)) ? 'Active Reservation' : 'Book a Table' ?></h1>
 </div>
 
 <?php if (!empty($blockBooking) && !empty($existingRes)): ?>
