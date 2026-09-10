@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Model\Game;
 use App\Model\Rating;
+use App\Model\Table;
 
 class GameController
 {
@@ -11,6 +12,7 @@ class GameController
     {
         $gameModel   = new Game();
         $ratingModel = new Rating();
+        $tableModel  = new Table();
 
         $filters = [
             'q'          => trim($_GET['q'] ?? ''),
@@ -34,6 +36,10 @@ class GameController
             'filters'            => $filters,
             'ratingMap'          => $ratingMap,
             'playerActiveGameId' => $playerActiveGameId,
+            'heroStats'          => [
+                'games'  => count($games),
+                'tables' => count($tableModel->getAll()),
+            ],
         ]);
     }
 

@@ -18,9 +18,9 @@
                 <?php endif; ?>
             </div>
             <div class="hero-stats">
-                <div class="hero-stat"><span class="hero-stat-num"><?= count($games) ?>+</span><span class="hero-stat-label">Board Games</span></div>
-                <div class="hero-stat"><span class="hero-stat-num">20+</span><span class="hero-stat-label">Comfortable Tables</span></div>
-                <div class="hero-stat"><span class="hero-stat-num">2–18</span><span class="hero-stat-label">Players per Game</span></div>
+                <div class="hero-stat"><span class="hero-stat-num"><?= (int)($heroStats['games'] ?? count($games)) ?></span><span class="hero-stat-label">Board Games</span></div>
+                <div class="hero-stat"><span class="hero-stat-num"><?= (int)($heroStats['tables'] ?? 0) ?></span><span class="hero-stat-label">Comfortable Tables</span></div>
+                <div class="hero-stat"><span class="hero-stat-num">2+</span><span class="hero-stat-label">Players per Game</span></div>
                 <div class="hero-stat"><span class="hero-stat-num">24/7</span><span class="hero-stat-label">Game Service</span></div>
             </div>
         </div>

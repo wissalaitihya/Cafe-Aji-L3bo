@@ -36,13 +36,26 @@
     /* Sidebar collapse toggle */
     var btn = document.getElementById('sidebar-toggle');
     var sidebar = document.getElementById('sidebar');
-    if (btn && sidebar) {
+    var logo = document.querySelector('.sidebar-logo');
+    if (sidebar) {
         var key = 'sidebar_collapsed';
         if (localStorage.getItem(key) === '1') sidebar.classList.add('collapsed');
-        btn.addEventListener('click', function() {
-            sidebar.classList.toggle('collapsed');
-            localStorage.setItem(key, sidebar.classList.contains('collapsed') ? '1' : '0');
-        });
+        if (btn) {
+            btn.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                localStorage.setItem(key, sidebar.classList.contains('collapsed') ? '1' : '0');
+            });
+        }
+        /* When collapsed, clicking the logo re-expands the sidebar */
+        if (logo) {
+            logo.addEventListener('click', function(e) {
+                if (sidebar.classList.contains('collapsed')) {
+                    e.preventDefault();
+                    sidebar.classList.remove('collapsed');
+                    localStorage.setItem(key, '0');
+                }
+            });
+        }
         document.addEventListener('click', function(e) {
             if (sidebar.classList.contains('open') &&
                 !sidebar.contains(e.target) &&

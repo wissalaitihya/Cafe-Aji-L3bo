@@ -193,7 +193,8 @@ a:hover { color: var(--purple-bright); }
     transition: all 0.2s;
 }
 .sidebar-toggle-btn:hover { color: var(--purple); border-color: var(--purple); }
-.sidebar.collapsed .sidebar-toggle-btn { transform: rotate(180deg); }
+.sidebar.collapsed .sidebar-toggle-btn { display: none; }
+.sidebar.collapsed .sidebar-brand { justify-content: center; }
 
 /* Nav */
 .sidebar-nav {
