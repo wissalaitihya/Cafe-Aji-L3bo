@@ -1,7 +1,7 @@
 <?php require __DIR__ . '/../layout/header.php'; ?>
 
 <!-- ── Hero Section ── -->
-<section class="hero">
+<section class="hero catalogue-hero">
     <div class="hero-glow hero-glow-a"></div>
     <div class="hero-glow hero-glow-b"></div>
     <div class="hero-inner">
@@ -114,8 +114,12 @@
     </div>
 </section>
 
-<div class="page-header">
-    <h1>&#127918; Game Catalogue</h1>
+<div class="page-header catalogue-heading">
+    <div>
+        <p class="eyebrow-label">THE LIBRARY</p>
+        <h1>Choose your next table story</h1>
+        <p class="page-intro">Browse the shelf, find your people, and make tonight a little more memorable.</p>
+    </div>
     <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
         <a href="<?= BASE_PATH ?>/games/create" class="btn btn-success">+ Add Game</a>
     <?php endif; ?>
@@ -168,14 +172,10 @@
     <div class="card-grid">
         <?php foreach ($games as $game): ?>
             <div class="card game-card">
-                <?php if (!empty($game['image_game'])): ?>
-                    <div class="card-image">
-                        <img src="<?= BASE_PATH ?>/<?= htmlspecialchars($game['image_game']) ?>"
-                             alt="<?= htmlspecialchars($game['name_game']) ?>">
-                    </div>
-                <?php else: ?>
-                    <div class="card-image-placeholder">&#127918;</div>
-                <?php endif; ?>
+                <div class="card-image">
+                    <img src="<?= game_image_url($game) ?>" alt="<?= htmlspecialchars($game['name_game']) ?>" loading="lazy">
+                    <span class="game-card-category"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $game['category_game']))) ?></span>
+                </div>
                 <div class="card-body">
                     <h3><?= htmlspecialchars($game['name_game']) ?></h3>
                     <div class="game-info-row">

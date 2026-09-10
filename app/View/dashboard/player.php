@@ -96,14 +96,10 @@
     <div class="card-grid">
         <?php foreach ($featuredGames as $g): ?>
             <div class="card game-card">
-                <?php if (!empty($g['image_game'])): ?>
-                    <div class="card-image">
-                        <img src="<?= BASE_PATH ?>/<?= htmlspecialchars($g['image_game']) ?>"
-                             alt="<?= htmlspecialchars($g['name_game']) ?>">
-                    </div>
-                <?php else: ?>
-                    <div class="card-image-placeholder">&#127918;</div>
-                <?php endif; ?>
+                <div class="card-image">
+                    <img src="<?= game_image_url($g) ?>" alt="<?= htmlspecialchars($g['name_game']) ?>" loading="lazy">
+                    <span class="game-card-category"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $g['category_game']))) ?></span>
+                </div>
                 <div class="card-body">
                     <h3><?= htmlspecialchars($g['name_game']) ?></h3>
                     <div class="game-info-row">

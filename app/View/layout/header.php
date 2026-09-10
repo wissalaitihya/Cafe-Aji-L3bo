@@ -17,6 +17,14 @@
     function nav_active(string $seg, string $cp): string {
         return (strpos($cp, $seg) !== false) ? ' active' : '';
     }
+    function game_image_url(array $game): string {
+        if (!empty($game['image_game'])) {
+            return BASE_PATH . '/' . htmlspecialchars($game['image_game']);
+        }
+        $seed = max(1, (int)($game['id_game'] ?? 1));
+        $category = rawurlencode(str_replace('_', '-', $game['category_game'] ?? 'board-game'));
+        return 'https://loremflickr.com/900/600/boardgame,' . $category . '?lock=' . $seed;
+    }
     $mainPageClass = '';
     if ($userRole !== 'guest') {
         if (in_array($cp, [BASE_PATH . '/player/dashboard', BASE_PATH . '/reservations/my', BASE_PATH . '/reservations/create'], true)
@@ -52,26 +60,26 @@
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
             <a href="<?= $logoHref ?>" class="sidebar-logo">🎲 <span>Aji L3bo</span></a>
-            <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Collapse">&#10094;</button>
+            <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Collapse navigation" aria-label="Collapse navigation">&#10094;</button>
         </div>
 
         <nav class="sidebar-nav">
             <?php if ($userRole === 'admin'): ?>
                 <span class="sidebar-section-title">Admin</span>
-                <a href="<?= BASE_PATH ?>/admin/dashboard" class="sidebar-link<?= nav_active('/admin/dashboard', $cp) ?>"><span class="si">🏠</span><span class="sl">Dashboard</span></a>
-                <a href="<?= BASE_PATH ?>/admin/stats"     class="sidebar-link<?= nav_active('/admin/stats', $cp) ?>"><span class="si">📊</span><span class="sl">Statistics</span></a>
+                <a href="<?= BASE_PATH ?>/admin/dashboard" data-tooltip="Dashboard" class="sidebar-link<?= nav_active('/admin/dashboard', $cp) ?>"><span class="si">🏠</span><span class="sl">Dashboard</span></a>
+                <a href="<?= BASE_PATH ?>/admin/stats"     data-tooltip="Statistics" class="sidebar-link<?= nav_active('/admin/stats', $cp) ?>"><span class="si">📊</span><span class="sl">Statistics</span></a>
                 <span class="sidebar-section-title">Manage</span>
-                <a href="<?= BASE_PATH ?>/games"        class="sidebar-link<?= nav_active('/games', $cp) ?>"><span class="si">🎮</span><span class="sl">Games</span></a>
-                <a href="<?= BASE_PATH ?>/tables"       class="sidebar-link<?= nav_active('/tables', $cp) ?>"><span class="si">🪑</span><span class="sl">Tables</span></a>
-                <a href="<?= BASE_PATH ?>/reservations" class="sidebar-link<?= nav_active('/reservations', $cp) ?>"><span class="si">📋</span><span class="sl">Reservations</span></a>
-                <a href="<?= BASE_PATH ?>/sessions"     class="sidebar-link<?= nav_active('/sessions', $cp) ?>"><span class="si">▶</span><span class="sl">Sessions</span></a>
+                <a href="<?= BASE_PATH ?>/games"        data-tooltip="Games" class="sidebar-link<?= nav_active('/games', $cp) ?>"><span class="si">🎮</span><span class="sl">Games</span></a>
+                <a href="<?= BASE_PATH ?>/tables"       data-tooltip="Tables" class="sidebar-link<?= nav_active('/tables', $cp) ?>"><span class="si">🪑</span><span class="sl">Tables</span></a>
+                <a href="<?= BASE_PATH ?>/reservations" data-tooltip="Reservations" class="sidebar-link<?= nav_active('/reservations', $cp) ?>"><span class="si">📋</span><span class="sl">Reservations</span></a>
+                <a href="<?= BASE_PATH ?>/sessions"     data-tooltip="Sessions" class="sidebar-link<?= nav_active('/sessions', $cp) ?>"><span class="si">▶</span><span class="sl">Sessions</span></a>
             <?php else: /* player */ ?>
                 <span class="sidebar-section-title">Player</span>
-                <a href="<?= BASE_PATH ?>/player/dashboard"    class="sidebar-link<?= nav_active('/player/dashboard', $cp) ?>"><span class="si">🏠</span><span class="sl">Dashboard</span></a>
+                <a href="<?= BASE_PATH ?>/player/dashboard"    data-tooltip="Dashboard" class="sidebar-link<?= nav_active('/player/dashboard', $cp) ?>"><span class="si">🏠</span><span class="sl">Dashboard</span></a>
                 <span class="sidebar-section-title">Play</span>
-                <a href="<?= BASE_PATH ?>/games"               class="sidebar-link<?= nav_active('/games', $cp) ?>"><span class="si">🎮</span><span class="sl">Games</span></a>
-                <a href="<?= BASE_PATH ?>/reservations/create" class="sidebar-link<?= nav_active('/reservations/create', $cp) ?>"><span class="si">➕</span><span class="sl">Book Table</span></a>
-                <a href="<?= BASE_PATH ?>/reservations/my"     class="sidebar-link<?= nav_active('/reservations/my', $cp) ?>"><span class="si">📋</span><span class="sl">My Reservations</span></a>
+                <a href="<?= BASE_PATH ?>/games"               data-tooltip="Games" class="sidebar-link<?= nav_active('/games', $cp) ?>"><span class="si">🎮</span><span class="sl">Games</span></a>
+                <a href="<?= BASE_PATH ?>/reservations/create" data-tooltip="Book Table" class="sidebar-link<?= nav_active('/reservations/create', $cp) ?>"><span class="si">➕</span><span class="sl">Book Table</span></a>
+                <a href="<?= BASE_PATH ?>/reservations/my"     data-tooltip="My Reservations" class="sidebar-link<?= nav_active('/reservations/my', $cp) ?>"><span class="si">📋</span><span class="sl">My Reservations</span></a>
             <?php endif; ?>
         </nav>
 
@@ -83,13 +91,13 @@
                     <div class="sidebar-role"><?= ucfirst($userRole) ?></div>
                 </div>
             </div>
-            <a href="<?= BASE_PATH ?>/logout" class="sidebar-link sidebar-logout"><span class="si">🚪</span><span class="sl">Logout</span></a>
+            <a href="<?= BASE_PATH ?>/logout" data-tooltip="Logout" class="sidebar-link sidebar-logout"><span class="si">🚪</span><span class="sl">Logout</span></a>
         </div>
     </aside>
 
     <div class="main-wrapper">
         <header class="topbar">
-            <button class="topbar-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')" title="Menu">☰</button>
+            <button class="topbar-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')" title="Open navigation" aria-label="Open navigation">☰</button>
             <span class="topbar-logo-mobile"><a href="<?= $logoHref ?>">🎲 Aji L3bo</a></span>
             <span class="topbar-user">👤 <?= htmlspecialchars($_SESSION['user_name'] ?? '') ?></span>
         </header>

@@ -29,14 +29,9 @@ function renderStars(float $avg, int $total = 0, bool $big = false): string {
 <?php endif; ?>
 
 <div class="detail-card">
-    <?php if (!empty($game['image_game'])): ?>
-        <div class="detail-image">
-            <img src="<?= BASE_PATH ?>/<?= htmlspecialchars($game['image_game']) ?>"
-                 alt="<?= htmlspecialchars($game['name_game']) ?>">
-        </div>
-    <?php else: ?>
-        <div class="detail-image-placeholder">&#127918;</div>
-    <?php endif; ?>
+    <div class="detail-image">
+        <img src="<?= game_image_url($game) ?>" alt="<?= htmlspecialchars($game['name_game']) ?>">
+    </div>
 
     <div class="detail-top-row">
         <?php if ($isPlayingNow ?? false): ?>
@@ -144,14 +139,10 @@ function renderStars(float $avg, int $total = 0, bool $big = false): string {
     <div class="card-grid related-grid">
         <?php foreach ($related as $r): ?>
             <div class="card game-card">
-                <?php if (!empty($r['image_game'])): ?>
-                    <div class="card-image">
-                        <img src="<?= BASE_PATH ?>/<?= htmlspecialchars($r['image_game']) ?>"
-                             alt="<?= htmlspecialchars($r['name_game']) ?>">
-                    </div>
-                <?php else: ?>
-                    <div class="card-image-placeholder">&#127918;</div>
-                <?php endif; ?>
+                <div class="card-image">
+                    <img src="<?= game_image_url($r) ?>" alt="<?= htmlspecialchars($r['name_game']) ?>" loading="lazy">
+                    <span class="game-card-category"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $r['category_game']))) ?></span>
+                </div>
                 <div class="card-body">
                     <h3><?= htmlspecialchars($r['name_game']) ?></h3>
                     <div class="game-info-row">
