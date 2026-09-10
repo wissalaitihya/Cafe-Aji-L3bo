@@ -2771,6 +2771,47 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .app-footer, .public-footer { color: var(--text-muted); letter-spacing: 0.02em; }
 .app-footer p, .public-footer p { font-size: 0.78rem; }
 
+/* ============================================================
+   FINAL PUBLIC-PAGE POLISH
+   ============================================================ */
+.catalogue-hero .hero-copy { padding-block: 1.5rem; }
+.catalogue-hero .hero-title { max-width: 8ch; font-size: clamp(3.2rem, 7vw, 5.7rem); line-height: 0.92; }
+.catalogue-hero .hero-sub { max-width: 42ch; margin-top: 1.5rem; font-size: 1.05rem; line-height: 1.7; }
+.catalogue-hero .hero-actions { margin-top: 1.75rem; }
+.catalogue-hero .hero-stats { gap: clamp(1.25rem, 4vw, 2.75rem); margin-top: 2.75rem; }
+.catalogue-hero .hero-stat-num { font-size: 1.85rem; }
+.catalogue-hero .hero-stat-label { letter-spacing: 0.05em; }
+
+.game-image-link { display: block; width: 100%; height: 100%; }
+.game-image-link:focus-visible { outline: 3px solid #fffaf3; outline-offset: -5px; position: relative; z-index: 2; }
+.game-image-link img { display: block; }
+
+.detail-page-header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+.detail-page-header .btn-back { justify-self: start; }
+.detail-page-title { grid-column: 2; grid-row: 1; margin: 0; text-align: center; white-space: nowrap; }
+
+.auth-card { max-width: 470px; }
+.auth-card.auth-login { border-top: 4px solid var(--cyan); }
+.auth-card.auth-register { border-top: 4px solid var(--purple); }
+.auth-header { margin-bottom: 1.75rem; }
+.auth-kicker { margin: 0 0 0.55rem; color: var(--purple-dim); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.18em; }
+.auth-register .auth-kicker { color: var(--cyan-dim); }
+.auth-title { max-width: 10ch; margin: 0; font-size: clamp(2rem, 5vw, 2.75rem); line-height: 0.98; }
+.auth-subtitle { margin: 0.7rem 0 0; max-width: 34ch; line-height: 1.55; }
+.auth-login .form-card, .auth-register .form-card { margin-top: 0; }
+.auth-login .btn-primary { background: var(--cyan-dim); border-color: var(--cyan-dim); }
+.auth-login .btn-primary:hover { background: var(--cyan); border-color: var(--cyan); }
+.auth-register .btn-primary { background: var(--purple-dim); border-color: var(--purple-dim); }
+.auth-register .btn-primary:hover { background: var(--purple); border-color: var(--purple); }
+
+@media (max-width: 600px) {
+    .detail-page-header { display: flex; flex-direction: column; align-items: stretch; gap: 0.8rem; }
+    .detail-page-header .btn-back { align-self: flex-start; }
+    .detail-page-title { order: -1; white-space: normal; text-align: left; }
+    .catalogue-hero .hero-title { font-size: clamp(3rem, 15vw, 4.6rem); }
+    .catalogue-hero .hero-stats { margin-top: 2rem; }
+}
+
 @media (max-width: 800px) {
     .catalogue-hero { min-height: 560px; background-position: 62% center; }
     .detail-card { display: block; }

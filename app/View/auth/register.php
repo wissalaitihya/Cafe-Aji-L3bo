@@ -1,9 +1,10 @@
 <?php require __DIR__ . '/../layout/header.php'; ?>
 
-<div class="auth-card">
+<div class="auth-card auth-register">
     <div class="auth-header">
-        <h1 class="auth-title">Aji L3bo</h1>
-        <p class="auth-subtitle">Create your account to play our games</p>
+        <p class="auth-kicker">JOIN THE TABLE</p>
+        <h1 class="auth-title">Make room for fun.</h1>
+        <p class="auth-subtitle">Create your account and discover your next favorite game.</p>
     </div>
 
     <?php if (!empty($error)): ?>

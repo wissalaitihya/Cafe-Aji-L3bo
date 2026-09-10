@@ -1,9 +1,10 @@
 <?php require __DIR__ . '/../layout/header.php'; ?>
 
-<div class="auth-card">
+<div class="auth-card auth-login">
     <div class="auth-header">
-        <h1 class="auth-title">Aji L3bo</h1>
-        <p class="auth-subtitle">Connect to your account</p>
+        <p class="auth-kicker">WELCOME BACK</p>
+        <h1 class="auth-title">Your table is waiting.</h1>
+        <p class="auth-subtitle">Sign in to manage your bookings and keep playing.</p>
     </div>
 
     <?php if (!empty($error)): ?>

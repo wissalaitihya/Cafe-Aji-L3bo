@@ -16,9 +16,9 @@ function renderStars(float $avg, int $total = 0, bool $big = false): string {
 }
 ?>
 
-<div class="page-header">
+<div class="page-header detail-page-header">
     <a href="<?= BASE_PATH ?>/games" class="btn-back">&#8592; Games</a>
-    <h1>&#127918; <?= htmlspecialchars($game['name_game']) ?></h1>
+    <h1 class="detail-page-title">&#127918; <?= htmlspecialchars($game['name_game']) ?></h1>
 </div>
 
 <?php if (!empty($_GET['rated'])): ?>
@@ -140,7 +140,9 @@ function renderStars(float $avg, int $total = 0, bool $big = false): string {
         <?php foreach ($related as $r): ?>
             <div class="card game-card">
                 <div class="card-image">
-                    <img src="<?= game_image_url($r) ?>" alt="<?= htmlspecialchars($r['name_game']) ?>" loading="lazy">
+                            <a href="<?= BASE_PATH ?>/games/<?= $r['id_game'] ?>" class="game-image-link" aria-label="View <?= htmlspecialchars($r['name_game']) ?> details">
+                                <img src="<?= game_image_url($r) ?>" alt="<?= htmlspecialchars($r['name_game']) ?>" loading="lazy">
+                            </a>
                     <span class="game-card-category"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $r['category_game']))) ?></span>
                 </div>
                 <div class="card-body">

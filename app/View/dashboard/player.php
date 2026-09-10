@@ -97,7 +97,9 @@
         <?php foreach ($featuredGames as $g): ?>
             <div class="card game-card">
                 <div class="card-image">
-                    <img src="<?= game_image_url($g) ?>" alt="<?= htmlspecialchars($g['name_game']) ?>" loading="lazy">
+                    <a href="<?= BASE_PATH ?>/games/<?= $g['id_game'] ?>" class="game-image-link" aria-label="View <?= htmlspecialchars($g['name_game']) ?> details">
+                        <img src="<?= game_image_url($g) ?>" alt="<?= htmlspecialchars($g['name_game']) ?>" loading="lazy">
+                    </a>
                     <span class="game-card-category"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $g['category_game']))) ?></span>
                 </div>
                 <div class="card-body">

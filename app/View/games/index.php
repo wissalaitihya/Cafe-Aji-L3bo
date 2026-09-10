@@ -173,7 +173,9 @@
         <?php foreach ($games as $game): ?>
             <div class="card game-card">
                 <div class="card-image">
-                    <img src="<?= game_image_url($game) ?>" alt="<?= htmlspecialchars($game['name_game']) ?>" loading="lazy">
+                    <a href="<?= BASE_PATH ?>/games/<?= $game['id_game'] ?>" class="game-image-link" aria-label="View <?= htmlspecialchars($game['name_game']) ?> details">
+                        <img src="<?= game_image_url($game) ?>" alt="<?= htmlspecialchars($game['name_game']) ?>" loading="lazy">
+                    </a>
                     <span class="game-card-category"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $game['category_game']))) ?></span>
                 </div>
                 <div class="card-body">
