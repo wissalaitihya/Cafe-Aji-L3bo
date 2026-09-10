@@ -346,6 +346,11 @@ a:hover { color: var(--purple-bright); }
     max-width: 1280px;
     width: 100%;
 }
+/* Games catalogue: span the full available width */
+.content:has(.search-bar),
+.public-content:has(.search-bar) {
+    max-width: none;
+}
 /* keep .container working as alias */
 .container { padding: 2rem 2.5rem 4rem; }
 

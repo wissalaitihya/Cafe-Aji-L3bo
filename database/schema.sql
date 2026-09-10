@@ -104,11 +104,25 @@ INSERT INTO games (name_game, players_min, players_max, duration, difficulty, de
 -- =====================
 -- V2 MIGRATION (run on existing DB)
 -- =====================
-ALTER TABLE games ADD COLUMN IF NOT EXISTS how_to_play TEXT AFTER description_game;
-ALTER TABLE games ADD COLUMN IF NOT EXISTS image_game VARCHAR(255) DEFAULT NULL AFTER how_to_play;
+-- MySQL has no "ADD COLUMN IF NOT EXISTS"; guard with information_schema.
+SET @has_how_to_play = (SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'games' AND COLUMN_NAME = 'how_to_play');
+SET @sql = IF(@has_how_to_play = 0,
+    'ALTER TABLE games ADD COLUMN how_to_play TEXT AFTER description_game', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @has_image_game = (SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'games' AND COLUMN_NAME = 'image_game');
+SET @sql = IF(@has_image_game = 0,
+    'ALTER TABLE games ADD COLUMN image_game VARCHAR(255) DEFAULT NULL AFTER how_to_play', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- V3 migration: add end_time to reservations (defaults to 2h after start for existing rows)
-ALTER TABLE reservations ADD COLUMN IF NOT EXISTS reservation_end_time TIME NOT NULL DEFAULT '00:00:00' AFTER reservation_time;
+SET @has_end_time = (SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reservations' AND COLUMN_NAME = 'reservation_end_time');
+SET @sql = IF(@has_end_time = 0,
+    'ALTER TABLE reservations ADD COLUMN reservation_end_time TIME NOT NULL DEFAULT ''00:00:00'' AFTER reservation_time', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 UPDATE reservations SET reservation_end_time = ADDTIME(reservation_time, '02:00:00') WHERE reservation_end_time = '00:00:00';
 
 -- V4 migration: populate how_to_play for existing seed games

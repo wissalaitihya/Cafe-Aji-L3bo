@@ -115,14 +115,30 @@ class ReservationController
             'id_table'     => $data['id_table'],
             'date'         => $data['reservation_date'],
             'time'         => $data['reservation_time'],
+            'end_time'     => $data['reservation_end_time'],
             'people_count' => $data['people_count'],
         ];
 
-        if (empty($data['id_table']) || empty($data['reservation_date']) || empty($data['reservation_time'])) {
+        if (empty($data['id_table']) || empty($data['reservation_date']) || empty($data['reservation_time']) || empty($data['reservation_end_time'])) {
             $tableModel = new Table();
             $gameModel = new Game();
             $this->render('reservation/create', [
                 'error'   => 'Please fill all fields',
+                'tables'  => $tableModel->getAll(),
+                'games'   => $gameModel->getAvailable(),
+                'prefill' => $prefill,
+            ]);
+            return;
+        }
+
+        // Validate end time: must be after start, min 30 minutes
+        $startMins = strtotime($data['reservation_time']);
+        $endMins   = strtotime($data['reservation_end_time']);
+        if ($startMins === false || $endMins === false || ($endMins - $startMins) < 1800) {
+            $tableModel = new Table();
+            $gameModel = new Game();
+            $this->render('reservation/create', [
+                'error'   => 'End time must be at least 30 minutes after the start time.',
                 'tables'  => $tableModel->getAll(),
                 'games'   => $gameModel->getAvailable(),
                 'prefill' => $prefill,

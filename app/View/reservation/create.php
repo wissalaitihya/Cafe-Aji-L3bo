@@ -45,6 +45,7 @@
     <div class="form-group">
         <label for="reservation_date">Date</label>
         <input type="date" id="reservation_date" name="reservation_date" value="<?= htmlspecialchars($pDate) ?>" min="<?= date('Y-m-d') ?>" required>
+        <small class="field-hint" id="date-hint">&#128197; Select the date first, then choose the start &amp; end times.</small>
     </div>
 
     <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
@@ -122,10 +123,27 @@
     var gameSelect   = document.getElementById('id_game');
     var peopleInput  = document.getElementById('people_count');
     var durationHint = document.getElementById('duration-hint');
+    var dateHint     = document.getElementById('date-hint');
     var gamePeopleHint  = document.getElementById('game-people-hint');
     var tablePeopleHint = document.getElementById('table-people-hint');
     var submitBtn    = document.getElementById('submit-btn');
     var submitError  = document.getElementById('submit-error');
+
+    // ── Date first: block time inputs until a date is chosen ──
+    function updateDateGate() {
+        var locked = !dateInput.value;
+        timeInput.disabled    = locked;
+        endTimeInput.disabled = locked;
+        if (locked) {
+            dateHint.textContent = '&#128197; Select the date first, then choose the start & end times.';
+            dateHint.className = 'field-hint';
+            dateHint.style.display = '';
+        } else {
+            dateHint.style.display = 'none';
+        }
+        runValidation();
+    }
+    dateInput.addEventListener('change', updateDateGate);
 
     // ── Duration hint (start→end) ──────────────────────
     function updateDurationHint() {
@@ -135,15 +153,20 @@
             var startMins = parseInt(start.split(':')[0]) * 60 + parseInt(start.split(':')[1]);
             var endMins   = parseInt(end.split(':')[0])   * 60 + parseInt(end.split(':')[1]);
             var diff = endMins - startMins;
-            if (diff > 0) {
+            durationHint.className = 'field-hint';
+            if (diff >= 30) {
                 var h = Math.floor(diff / 60);
                 var m = diff % 60;
                 durationHint.textContent = 'Duration: ' + (h > 0 ? h + 'h ' : '') + (m > 0 ? m + 'm' : '');
                 durationHint.style.display = '';
-            } else {
-                durationHint.textContent = diff < 0 ? '⚠ End time must be after start time.' : '';
+            } else if (diff > 0) {
                 durationHint.className = 'field-hint text-danger';
-                durationHint.style.display = diff < 0 ? '' : 'none';
+                durationHint.textContent = '⚠ Booking must be at least 30 minutes.';
+                durationHint.style.display = '';
+            } else {
+                durationHint.className = 'field-hint text-danger';
+                durationHint.textContent = '⚠ End time must be after start time.';
+                durationHint.style.display = '';
             }
         }
         runValidation();
@@ -151,6 +174,7 @@
     timeInput.addEventListener('change', updateDurationHint);
     endTimeInput.addEventListener('change', updateDurationHint);
     updateDurationHint();
+    updateDateGate();
 
     // ── People count vs game min/max ───────────────────
     function checkPeopleVsGame() {
@@ -216,13 +240,14 @@
         var gameOk  = checkPeopleVsGame();
         var tableOk = checkPeopleVsTable();
 
-        // Time check
+        // Time check: min 30 min booking (only once a date is chosen)
         var start = timeInput.value, end = endTimeInput.value;
-        var timeOk = true;
-        if (start && end) {
+        var datePicked = !!dateInput.value;
+        var timeOk = datePicked;
+        if (datePicked && start && end) {
             var s = parseInt(start.split(':')[0]) * 60 + parseInt(start.split(':')[1]);
             var e = parseInt(end.split(':')[0])   * 60 + parseInt(end.split(':')[1]);
-            timeOk = e > s;
+            timeOk = (e - s) >= 30;
         }
 
         var allOk = gameOk && tableOk && timeOk;
@@ -250,6 +275,16 @@
             var cap = parseInt(tableOpt.getAttribute('data-capacity') || '0');
             if (tableSelect.value && people > cap)
                 msgs.push('Table capacity (' + cap + ') is less than your group size (' + people + ').');
+            if (!dateInput.value)
+                msgs.push('Select a date first.');
+            if (start && end) {
+                var s2 = parseInt(start.split(':')[0]) * 60 + parseInt(start.split(':')[1]);
+                var e2 = parseInt(end.split(':')[0])   * 60 + parseInt(end.split(':')[1]);
+                if (e2 - s2 >= 0 && e2 - s2 < 30)
+                    msgs.push('Booking must be at least 30 minutes.');
+                else if (e2 - s2 < 0)
+                    msgs.push('End time must be after start time.');
+            }
             submitError.innerHTML = '&#9888; Cannot book: ' + msgs.join(' ');
             submitError.style.display = '';
             submitError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
