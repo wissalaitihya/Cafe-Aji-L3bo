@@ -24,7 +24,8 @@
 <div class="public-layout">
     <header class="public-topbar">
         <a href="<?= BASE_PATH ?>/games" class="public-logo">🎲 <span>Aji L3bo</span></a>
-        <nav class="public-nav">
+        <button class="public-nav-toggle" id="public-nav-toggle" aria-label="Menu" aria-expanded="false">☰</button>
+        <nav class="public-nav" id="public-nav">
             <a href="<?= BASE_PATH ?>/games"    class="public-nav-link<?= nav_active('/games', $cp) ?>">🎮 Games</a>
             <a href="<?= BASE_PATH ?>/login"    class="public-nav-link<?= nav_active('/login', $cp) ?>">Login</a>
             <a href="<?= BASE_PATH ?>/register" class="btn btn-primary" style="font-size:0.82rem;padding:0.4rem 1.1rem">Register</a>

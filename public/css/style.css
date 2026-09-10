@@ -508,16 +508,18 @@ a:hover { color: var(--purple-bright); }
 .spark-3 { animation: sparkPulse 4s ease-in-out infinite 2.4s; }
 .spark-4 { animation: sparkPulse 4s ease-in-out infinite 1.8s; }
 
-/* Hide illustration on small screens */
+/* Hero stacks vertically — illustration stays visible, centered below copy */
 @media (max-width: 1080px) {
-    .hero-visual { display: none; }
+    .hero-inner  { flex-direction: column; }
     .hero-copy   { max-width: none; }
+    .hero-visual { max-width: 480px; margin: 0 auto; }
 }
 
 @media (max-width: 640px) {
     .hero { padding: 2.5rem 1.5rem 2rem; }
     .hero-title { font-size: 2.2rem; }
     .hero-stats { gap: 1.5rem; }
+    .hero-visual { max-width: 320px; margin: 0 auto; }
 }
 
 /* App footer */
@@ -2077,6 +2079,17 @@ tr.res-row-cancelled td { opacity: 0.55; }
     z-index: 100;
     box-shadow: 0 1px 8px rgba(0,0,0,0.25);
 }
+.public-nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    line-height: 1;
+}
+.public-nav-toggle:focus-visible { outline: 2px solid var(--accent-primary); border-radius: 0.3rem; }
 .public-logo {
     font-size: 1.25rem;
     font-weight: 700;
@@ -2091,6 +2104,29 @@ tr.res-row-cancelled td { opacity: 0.55; }
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+/* Mobile: collapse nav into a dropdown menu */
+@media (max-width: 768px) {
+    .public-topbar { position: relative; }
+    .public-nav-toggle { display: inline-block; }
+    .public-nav {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.15rem;
+        padding: 0.6rem;
+        background: var(--bg-card);
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+    }
+    .public-nav.open { display: flex; }
+    .public-nav-link { padding: 0.65rem 0.9rem; border-radius: 0.4rem; }
+    .public-nav .btn { width: 100%; }
 }
 .public-nav-link {
     padding: 0.4rem 0.9rem;

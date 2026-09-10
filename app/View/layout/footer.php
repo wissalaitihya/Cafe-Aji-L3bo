@@ -17,22 +17,40 @@
 
 <script>
 (function(){
+    /* Public nav dropdown toggle (mobile) */
+    var navToggle = document.getElementById('public-nav-toggle');
+    var nav = document.getElementById('public-nav');
+    if (navToggle && nav) {
+        navToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var open = nav.classList.toggle('open');
+            navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        document.addEventListener('click', function(e) {
+            if (nav.classList.contains('open') && !nav.contains(e.target) && !navToggle.contains(e.target)) {
+                nav.classList.remove('open');
+                navToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+    /* Sidebar collapse toggle */
     var btn = document.getElementById('sidebar-toggle');
     var sidebar = document.getElementById('sidebar');
-    if (!btn || !sidebar) return;
-    var key = 'sidebar_collapsed';
-    if (localStorage.getItem(key) === '1') sidebar.classList.add('collapsed');
-    btn.addEventListener('click', function() {
-        sidebar.classList.toggle('collapsed');
-        localStorage.setItem(key, sidebar.classList.contains('collapsed') ? '1' : '0');
-    });
-    document.addEventListener('click', function(e) {
-        if (sidebar.classList.contains('open') &&
-            !sidebar.contains(e.target) &&
-            !e.target.closest('.topbar-menu-btn')) {
-            sidebar.classList.remove('open');
-        }
-    });
+    if (btn && sidebar) {
+        var key = 'sidebar_collapsed';
+        if (localStorage.getItem(key) === '1') sidebar.classList.add('collapsed');
+        btn.addEventListener('click', function() {
+            sidebar.classList.toggle('collapsed');
+            localStorage.setItem(key, sidebar.classList.contains('collapsed') ? '1' : '0');
+        });
+        document.addEventListener('click', function(e) {
+            if (sidebar.classList.contains('open') &&
+                !sidebar.contains(e.target) &&
+                !e.target.closest('.topbar-menu-btn')) {
+                sidebar.classList.remove('open');
+            }
+        });
+    }
 }());
 </script>
 </body>
