@@ -376,7 +376,8 @@ a:hover { color: var(--purple-bright); }
 }
 .hero-glow-a { width: 320px; height: 320px; top: -100px; left: -80px; background: var(--purple-glow); }
 .hero-glow-b { width: 300px; height: 300px; bottom: -120px; right: -60px; background: var(--cyan-glow); }
-.hero-inner { position: relative; z-index: 1; max-width: 760px; }
+.hero-inner { position: relative; z-index: 1; display: flex; align-items: center; gap: 2rem; }
+.hero-copy  { flex: 1 1 auto; max-width: 640px; }
 .hero-eyebrow {
     display: inline-block;
     font-family: 'Orbitron', sans-serif;
@@ -450,6 +451,69 @@ a:hover { color: var(--purple-bright); }
     text-transform: uppercase;
     letter-spacing: 0.08em;
 }
+/* Hero visual (SVG illustration) */
+.hero-visual {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 620px;
+    margin-left: auto;
+    margin-right: 2.5rem;
+    padding-right: 0.5rem;
+}
+.hero-visual svg { width: 100%; height: auto; display: block; }
+
+/* Floating animation for SVG pieces */
+@keyframes heroFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+}
+.hero-card-back {
+    transform-origin: center;
+    animation: heroFloat 8s ease-in-out infinite;
+}
+.hero-card-front {
+    transform-origin: center;
+    animation: heroFloat 8s ease-in-out infinite 0.6s;
+}
+.hero-die-1 {
+    transform-origin: center;
+    animation: heroFloat 9s ease-in-out infinite 1.2s;
+}
+.hero-die-2 {
+    transform-origin: center;
+    animation: heroFloat 8.5s ease-in-out infinite 1.8s;
+}
+.hero-die-3 {
+    transform-origin: center;
+    animation: heroFloat 10s ease-in-out infinite 0.9s;
+}
+.hero-card-gold {
+    transform-origin: center;
+    animation: heroFloat 8.5s ease-in-out infinite 0.3s;
+}
+.hero-token {
+    transform-origin: center;
+}
+.hero-token-1 { animation: heroFloat 7.5s ease-in-out infinite 0.8s; }
+.hero-token-2 { animation: heroFloat 8s ease-in-out infinite 1.5s; }
+.hero-token-3 { animation: heroFloat 7.8s ease-in-out infinite 2.4s; }
+
+/* Sparkle pulse */
+@keyframes sparkPulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50%      { opacity: 1;   transform: scale(1.15); }
+}
+.spark-1 { animation: sparkPulse 4s ease-in-out infinite; }
+.spark-2 { animation: sparkPulse 4s ease-in-out infinite 1.2s; }
+.spark-3 { animation: sparkPulse 4s ease-in-out infinite 2.4s; }
+.spark-4 { animation: sparkPulse 4s ease-in-out infinite 1.8s; }
+
+/* Hide illustration on small screens */
+@media (max-width: 1080px) {
+    .hero-visual { display: none; }
+    .hero-copy   { max-width: none; }
+}
+
 @media (max-width: 640px) {
     .hero { padding: 2.5rem 1.5rem 2rem; }
     .hero-title { font-size: 2.2rem; }
