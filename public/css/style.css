@@ -349,6 +349,108 @@ a:hover { color: var(--purple-bright); }
 /* keep .container working as alias */
 .container { padding: 2rem 2.5rem 4rem; }
 
+/* ── Hero Section (home / games catalogue) ─────────────── */
+.hero {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(1200px 600px at 15% -10%, rgba(168,85,247,0.14), transparent 60%),
+        radial-gradient(1000px 550px at 90% 110%, rgba(6,214,245,0.14), transparent 60%),
+        linear-gradient(135deg, #ffffff 0%, #f3f0ff 55%, #eafaff 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 3.5rem 2.5rem 3rem;
+    margin: 0 0 2rem;
+    box-shadow: var(--shadow-card);
+}
+.hero-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    pointer-events: none;
+}
+.hero-glow-a { width: 320px; height: 320px; top: -100px; left: -80px; background: var(--purple-glow); }
+.hero-glow-b { width: 300px; height: 300px; bottom: -120px; right: -60px; background: var(--cyan-glow); }
+.hero-inner { position: relative; z-index: 1; max-width: 760px; }
+.hero-eyebrow {
+    display: inline-block;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--purple-dim);
+    background: var(--purple-glow-lg);
+    padding: 0.35rem 0.9rem;
+    border-radius: var(--radius-pill);
+    margin-bottom: 1.25rem;
+    border: 1px solid var(--border-cyan);
+}
+.hero-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3rem;
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+.hero-title-accent {
+    background: linear-gradient(90deg, var(--purple) 0%, var(--cyan) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.hero-sub {
+    margin: 1.25rem 0 1.75rem;
+    font-size: 1.1rem;
+    line-height: 1.65;
+    color: var(--text-secondary);
+    max-width: 56ch;
+}
+.hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+.btn-hero { padding: 0.8rem 1.6rem; font-size: 0.95rem; }
+.btn-outline {
+    background: transparent;
+    color: var(--purple-dim);
+    border: 1px solid var(--border-active);
+    box-shadow: none;
+}
+.btn-outline::before { display: none; }
+.btn-outline:hover,
+.btn-outline:focus-visible {
+    background: var(--purple-glow-lg);
+    color: var(--purple-dim);
+    border-color: var(--purple);
+    box-shadow: var(--shadow-purple);
+    transform: translateY(-1px);
+}
+.hero-stats {
+    display: flex;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+    margin-top: 2.5rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--border);
+}
+.hero-stat { display: flex; flex-direction: column; gap: 0.25rem; }
+.hero-stat-num {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--purple-dim);
+}
+.hero-stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+@media (max-width: 640px) {
+    .hero { padding: 2.5rem 1.5rem 2rem; }
+    .hero-title { font-size: 2.2rem; }
+    .hero-stats { gap: 1.5rem; }
+}
+
 /* App footer */
 .app-footer {
     padding: 1rem 2rem;

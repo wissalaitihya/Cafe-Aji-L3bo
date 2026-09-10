@@ -1,5 +1,30 @@
 <?php require __DIR__ . '/../layout/header.php'; ?>
 
+<!-- ── Hero Section ── -->
+<section class="hero">
+    <div class="hero-glow hero-glow-a"></div>
+    <div class="hero-glow hero-glow-b"></div>
+    <div class="hero-inner">
+        <p class="hero-eyebrow">&#129351; Casablanca's Board Game Café</p>
+        <h1 class="hero-title">Play.<br><span class="hero-title-accent">Laugh.</span> Repeat.</h1>
+        <p class="hero-sub">From social deduction to cooperative quests — grab your squad, pick a table, and let the games begin.</p>
+        <div class="hero-actions">
+            <a href="<?= BASE_PATH ?>/games" class="btn btn-primary btn-hero">&#127918; Browse Games</a>
+            <?php if (isset($_SESSION['user_id'])): ?>
+                <a href="<?= BASE_PATH ?>/reservations/create" class="btn btn-hero btn-outline">&#128197; Book a Table</a>
+            <?php else: ?>
+                <a href="<?= BASE_PATH ?>/register" class="btn btn-hero btn-outline">&#127881; Create Account</a>
+            <?php endif; ?>
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat"><span class="hero-stat-num"><?= count($games) ?>+</span><span class="hero-stat-label">Board Games</span></div>
+            <div class="hero-stat"><span class="hero-stat-num">20+</span><span class="hero-stat-label">Comfortable Tables</span></div>
+            <div class="hero-stat"><span class="hero-stat-num">2–18</span><span class="hero-stat-label">Players per Game</span></div>
+            <div class="hero-stat"><span class="hero-stat-num">24/7</span><span class="hero-stat-label">Game Service</span></div>
+        </div>
+    </div>
+</section>
+
 <?php
 // Mini helper for star display on cards
 function cardStars(float $avg): string {
