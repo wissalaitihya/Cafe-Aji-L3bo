@@ -117,6 +117,12 @@ class Reservation
             return false;
         }
 
+        // Refuse to modify a reservation that is already cancelled (defense in depth)
+        $current = $this->getById($id);
+        if (($current['status_reservation'] ?? '') === 'cancelled') {
+            return false;
+        }
+
         $sql = "
             UPDATE reservations
             SET    status_reservation = :status

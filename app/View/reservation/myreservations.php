@@ -1,5 +1,6 @@
 <?php require __DIR__ . '/../layout/header.php'; ?>
 
+<div class="my-reservations-page">
 <div class="page-header">
     <h1>&#128203; My Reservations</h1>
     <a href="<?= BASE_PATH ?>/reservations/create" class="btn btn-success">&#43; Book a Table</a>
@@ -79,13 +80,13 @@
                       onsubmit="return confirm('Cancel this reservation?')">
                     <button type="submit" class="btn btn-small btn-danger">&#10005; Cancel</button>
                 </form>
-            <?php else: ?>
-                <span class="muted text-sm">—</span>
             <?php endif; ?>
         </div>
     </div>
     <?php endforeach; ?>
 </div>
 <?php endif; ?>
+
+</div><!-- /.my-reservations-page -->
 
 <?php require __DIR__ . '/../layout/footer.php'; ?>
