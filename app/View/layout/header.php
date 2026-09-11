@@ -44,6 +44,10 @@
 <div class="public-layout">
     <header class="public-topbar">
         <a href="<?= BASE_PATH ?>/games" class="public-logo">🎲 <span>Aji L3bo</span></a>
+        <form method="GET" action="<?= BASE_PATH ?>/games" class="global-search" role="search">
+            <span class="global-search-icon" aria-hidden="true">&#128269;</span>
+            <input type="search" name="q" placeholder="Search games" aria-label="Search games">
+        </form>
         <button class="public-nav-toggle" id="public-nav-toggle" aria-label="Menu" aria-expanded="false">☰</button>
         <nav class="public-nav" id="public-nav">
             <a href="<?= BASE_PATH ?>/games"    class="public-nav-link<?= nav_active('/games', $cp) ?>">🎮 Games</a>
@@ -84,20 +88,6 @@
         </nav>
 
         <div class="sidebar-foot">
-            <button type="button" class="sidebar-user profile-trigger" id="profile-trigger" aria-expanded="false" aria-controls="profile-popover" title="Open profile">
-                <div class="sidebar-avatar"><?= strtoupper(substr($_SESSION['user_name'] ?? 'U', 0, 1)) ?></div>
-                <div class="sidebar-user-info">
-                    <div class="sidebar-username"><?= htmlspecialchars($_SESSION['user_name'] ?? 'User') ?></div>
-                    <div class="sidebar-role"><?= ucfirst($userRole) ?></div>
-                </div>
-                <span class="profile-chevron" aria-hidden="true">&#8250;</span>
-            </button>
-            <div class="profile-popover" id="profile-popover" hidden>
-                <span class="profile-popover-kicker">Signed in as</span>
-                <strong><?= htmlspecialchars($_SESSION['user_name'] ?? 'User') ?></strong>
-                <span><?= ucfirst($userRole) ?> account</span>
-                <a href="<?= $logoHref ?>">Open dashboard</a>
-            </div>
             <a href="<?= BASE_PATH ?>/logout" data-tooltip="Logout" class="sidebar-link sidebar-logout"><span class="si">🚪</span><span class="sl">Logout</span></a>
         </div>
     </aside>
@@ -105,7 +95,27 @@
     <div class="main-wrapper">
         <header class="topbar">
             <button class="topbar-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')" title="Open navigation" aria-label="Open navigation">☰</button>
+            <div class="profile-anchor">
+                <button type="button" class="topbar-profile profile-trigger" id="profile-trigger" aria-expanded="false" aria-controls="profile-popover" title="Open profile">
+                    <span class="sidebar-avatar"><?= strtoupper(substr($_SESSION['user_name'] ?? 'U', 0, 1)) ?></span>
+                    <span class="topbar-profile-info">
+                        <strong><?= htmlspecialchars($_SESSION['user_name'] ?? 'User') ?></strong>
+                        <small><?= ucfirst($userRole) ?></small>
+                    </span>
+                    <span class="profile-chevron" aria-hidden="true">&#8250;</span>
+                </button>
+                <div class="profile-popover" id="profile-popover" hidden>
+                    <span class="profile-popover-kicker">Signed in as</span>
+                    <strong><?= htmlspecialchars($_SESSION['user_name'] ?? 'User') ?></strong>
+                    <span><?= ucfirst($userRole) ?> account</span>
+                    <a href="<?= $logoHref ?>">Open dashboard</a>
+                </div>
+            </div>
             <span class="topbar-logo-mobile"><a href="<?= $logoHref ?>">🎲 Aji L3bo</a></span>
+            <form method="GET" action="<?= BASE_PATH ?>/games" class="global-search" role="search">
+                <span class="global-search-icon" aria-hidden="true">&#128269;</span>
+                <input type="search" name="q" placeholder="Search games" aria-label="Search games">
+            </form>
         </header>
         <main class="content<?= $mainPageClass ?>">
 <?php endif; ?>

@@ -69,7 +69,8 @@
     var profileTrigger = document.getElementById('profile-trigger');
     var profilePopover = document.getElementById('profile-popover');
     if (profileTrigger && profilePopover) {
-        profileTrigger.addEventListener('click', function() {
+        profileTrigger.addEventListener('click', function(e) {
+            e.stopPropagation();
             var open = profilePopover.hasAttribute('hidden');
             if (open) profilePopover.removeAttribute('hidden');
             else profilePopover.setAttribute('hidden', '');
