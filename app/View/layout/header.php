@@ -47,6 +47,7 @@
         <form method="GET" action="<?= BASE_PATH ?>/games" class="global-search" role="search">
             <span class="global-search-icon" aria-hidden="true">&#128269;</span>
             <input type="search" name="q" placeholder="Search games" aria-label="Search games">
+            <div class="global-search-results" hidden></div>
         </form>
         <button class="public-nav-toggle" id="public-nav-toggle" aria-label="Menu" aria-expanded="false">☰</button>
         <nav class="public-nav" id="public-nav">
@@ -94,7 +95,7 @@
 
     <div class="main-wrapper">
         <header class="topbar">
-            <button class="topbar-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')" title="Open navigation" aria-label="Open navigation">☰</button>
+            <button class="topbar-menu-btn" id="topbar-menu" aria-controls="sidebar" aria-expanded="false" title="Open navigation" aria-label="Open navigation">☰</button>
             <div class="profile-anchor">
                 <button type="button" class="topbar-profile profile-trigger" id="profile-trigger" aria-expanded="false" aria-controls="profile-popover" title="Open profile">
                     <span class="sidebar-avatar"><?= strtoupper(substr($_SESSION['user_name'] ?? 'U', 0, 1)) ?></span>
@@ -115,6 +116,7 @@
             <form method="GET" action="<?= BASE_PATH ?>/games" class="global-search" role="search">
                 <span class="global-search-icon" aria-hidden="true">&#128269;</span>
                 <input type="search" name="q" placeholder="Search games" aria-label="Search games">
+                <div class="global-search-results" hidden></div>
             </form>
         </header>
         <main class="content<?= $mainPageClass ?>">
