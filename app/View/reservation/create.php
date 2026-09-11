@@ -4,6 +4,7 @@
     $pEndTime = $prefill['end_time']     ?? '';
     $pTable   = $prefill['id_table']     ?? '';
     $pPeople  = $prefill['people_count'] ?? '';
+    $pGame    = $_GET['id_game'] ?? '';
 ?>
 <?php require __DIR__ . '/../layout/header.php'; ?>
 
@@ -67,7 +68,8 @@
             <?php foreach ($games as $game): ?>
                 <option value="<?= $game['id_game'] ?>"
                         data-min="<?= $game['players_min'] ?>"
-                        data-max="<?= $game['players_max'] ?>">
+                    data-max="<?= $game['players_max'] ?>"
+                    <?= ((int)$pGame === (int)$game['id_game']) ? 'selected' : '' ?>>
                     <?= htmlspecialchars($game['name_game']) ?> (<?= $game['players_min'] ?>-<?= $game['players_max'] ?> players, <?= $game['duration'] ?> min)
                 </option>
             <?php endforeach; ?>

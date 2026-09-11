@@ -2461,6 +2461,22 @@ tr.res-row-cancelled td { opacity: 0.55; }
     border-bottom: 1px solid var(--border-color);
 }
 .section-block-header h2 { font-size: 1rem; font-weight: 600; margin: 0; }
+.section-caption { margin: 0.3rem 0 0; color: var(--text-muted); font-size: 0.8rem; }
+.available-games-list { display: flex; flex-direction: column; gap: 0.55rem; }
+.available-game-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: rgba(43, 116, 120, 0.035);
+}
+.available-game-info { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.available-game-info strong { color: var(--text-primary); font-size: 0.9rem; }
+.available-game-info span { color: var(--text-muted); font-size: 0.76rem; }
+.available-game-actions { display: flex; gap: 0.45rem; flex-shrink: 0; }
 
 /* ── Upcoming reservation cards (player dashboard) ── */
 .upcoming-list { display: flex; flex-direction: column; gap: 0.7rem; }
@@ -2870,6 +2886,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     .detail-page-title { order: -1; white-space: normal; text-align: left; }
     .catalogue-hero .hero-title { font-size: clamp(3rem, 15vw, 4.6rem); }
     .catalogue-hero .hero-stats { grid-template-columns: repeat(4, minmax(105px, 1fr)); margin-top: 2rem; overflow-x: auto; padding-bottom: 0.35rem; }
+    .available-game-row { align-items: flex-start; flex-direction: column; }
+    .available-game-actions { width: 100%; }
+    .available-game-actions .btn { flex: 1; }
 }
 
 @media (max-width: 800px) {

@@ -69,6 +69,12 @@ function renderStars(float $avg, int $total = 0, bool $big = false): string {
         <?php endif; ?>
     </div>
 
+    <?php if (!empty($_SESSION['user_id']) && ($_SESSION['user_role'] ?? '') !== 'admin'): ?>
+        <div class="card-actions">
+            <a href="<?= BASE_PATH ?>/reservations/create?id_game=<?= (int)$game['id_game'] ?>" class="btn btn-success">&#128197; Book a Table</a>
+        </div>
+    <?php endif; ?>
+
     <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
         <div class="card-actions">
             <a href="<?= BASE_PATH ?>/games/<?= $game['id_game'] ?>/edit" class="btn btn-warning">&#9998; Edit</a>
