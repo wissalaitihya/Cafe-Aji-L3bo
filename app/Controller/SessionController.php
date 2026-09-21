@@ -6,6 +6,8 @@ use App\Model\Session;
 use App\Model\Game;
 use App\Model\Table;
 use App\Model\Reservation;
+use Core\Csrf;
+use Core\Sanitizer;
 
 class SessionController
 {
@@ -54,16 +56,42 @@ class SessionController
     public function store()
     {
         $this->requireAdmin();
+        if (($csrfError = Csrf::requireValid()) !== null) {
+            http_response_code(419);
+            echo $csrfError;
+            return;
+        }
 
         $data = [
-            'id_reservation' => !empty($_POST['id_reservation']) ? (int)$_POST['id_reservation'] : null,
-            'id_game'        => (int)($_POST['id_game'] ?? 0),
-            'id_table'       => (int)($_POST['id_table'] ?? 0),
+            'id_reservation' => !empty($_POST['id_reservation']) ? Sanitizer::int($_POST['id_reservation'], 0) ?: null : null,
+            'id_game'        => Sanitizer::int($_POST['id_game'] ?? 0, 0),
+            'id_table'       => Sanitizer::int($_POST['id_table'] ?? 0, 0),
         ];
 
         if (empty($data['id_game']) || empty($data['id_table'])) {
             $this->redirect('/sessions/create');
             return;
+        }
+
+        // Verify the referenced rows exist and belong together (don't trust JS filtering).
+        $gameModel = new Game();
+        $tableModel = new Table();
+        if (!$gameModel->getById($data['id_game']) || !$tableModel->getById($data['id_table'])) {
+            $this->redirect('/sessions/create');
+            return;
+        }
+        if (!empty($data['id_reservation'])) {
+            $reservationModel = new Reservation();
+            $reservation = $reservationModel->getById($data['id_reservation']);
+            if (!$reservation || ($reservation['status_reservation'] ?? '') !== 'confirmed') {
+                $this->redirect('/sessions/create');
+                return;
+            }
+            // If the reservation picked a game, the session must use it.
+            if (!empty($reservation['id_game']) && (int) $reservation['id_game'] !== (int) $data['id_game']) {
+                $this->redirect('/sessions/create');
+                return;
+            }
         }
 
         $sessionModel = new Session();
@@ -84,6 +112,12 @@ class SessionController
     public function end($id)
     {
         $this->requireAdmin();
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && Csrf::check($_POST['_csrf'] ?? null) === false) {
+            http_response_code(419);
+            echo 'Invalid form token.';
+            return;
+        }
+        $id = (int) $id;
 
         $sessionModel = new Session();
         $session = $sessionModel->getById($id);

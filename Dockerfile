@@ -1,8 +1,9 @@
 FROM php:8.4-apache
 
-RUN docker-php-ext-install pdo_mysql
-
-RUN a2enmod rewrite
+RUN apt-get update && apt-get install -y --no-install-recommends unzip libzip-dev \
+    && docker-php-ext-install pdo_mysql opcache zip \
+    && a2enmod rewrite deflate expires headers \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -12,6 +13,8 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 RUN sed -ri 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
 WORKDIR /var/www/html
+
+COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache-custom.ini
 
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts

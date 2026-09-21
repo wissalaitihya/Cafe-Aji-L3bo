@@ -191,10 +191,9 @@ class Table
     public function getStats(): array
     {
         try {
-            $all      = $this->getAll();
-            $total    = count($all);
-            $occupied = count(array_filter($all, fn($t) => $t['status_table'] === 'occupied'));
-            $free     = $total - $occupied;
+            $total = (int) $this->pdo->query("SELECT COUNT(*) FROM tables")->fetchColumn();
+            $occupied = (int) $this->pdo->query("SELECT COUNT(*) FROM tables WHERE status_table = 'occupied'")->fetchColumn();
+            $free = $total - $occupied;
 
             // Most used table by confirmed reservations
             $mostUsed = null;

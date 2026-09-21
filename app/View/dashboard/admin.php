@@ -134,10 +134,11 @@
             <div class="as-meta">
                 <span>🪑 <?= htmlspecialchars($s['name_table'] ?? '-') ?></span>
                 <span>👤 <?= htmlspecialchars($s['name_user'] ?? '-') ?></span>
-                <span>⏱ <?= $s['elapsed_minutes'] ?? 0 ?>m</span>
+                <span>⏱ <?= (int)($s['elapsed_minutes'] ?? 0) ?>m</span>
             </div>
-            <form action="<?= BASE_PATH ?>/sessions/<?= $s['id_session'] ?>/end" method="POST"
+            <form action="<?= BASE_PATH ?>/sessions/<?= (int)$s['id_session'] ?>/end" method="POST"
                   onsubmit="return confirm('End session?')">
+    <?= \Core\Csrf::field() ?>
                 <button type="submit" class="btn btn-small btn-danger">■ End</button>
             </form>
         </div>

@@ -19,23 +19,22 @@ class DashboardController
         $sessionModel     = new Session();
         $tableModel       = new Table();
 
-        $totalGames        = count($gameModel->getAll());
+        // Single cheap queries — no full-table fetches + PHP counting.
+        $gameStats         = $gameModel->getStats();
+        $totalGames        = $gameModel->countAll();
         $todayReservations = $reservationModel->getTodayReservations();
-        $allReservations   = $reservationModel->getAll();
         $activeSessions    = $sessionModel->getActive();
         $tables            = $tableModel->getAll();
-        $gameStats         = $gameModel->getStats();
         $tableStats        = $tableModel->getStats();
         $monthStats        = $reservationModel->getMonthStats();
         $pendingCount      = $reservationModel->countPending();
         $confirmedCount    = $reservationModel->countConfirmed();
         $cancelledCount    = $reservationModel->countCancelled();
+        // Recent reservations for the table (bounded) instead of unbounded getAll().
+        $allReservations   = $reservationModel->getAll(50);
 
-        // Games currently in use (for "Now Playing" section)
-        $allGames   = $gameModel->getAll();
-        $inUseGames = array_values(array_filter($allGames, function($g) {
-            return $g['status_game'] === 'in_use';
-        }));
+        // Games currently in use: bounded query instead of filtering full getAll() twice.
+        $inUseGames = $gameModel->search(['status' => 'in_use'], 12);
 
         $this->render('dashboard/admin', [
             'totalGames'        => $totalGames,
@@ -60,12 +59,12 @@ class DashboardController
         $reservationModel = new Reservation();
         $gameModel        = new Game();
 
-        $myReservations = $reservationModel->getByUserId($_SESSION['user_id']);
-        $featuredGames  = array_slice($gameModel->getAvailable(), 0, 4);
+        $myReservations = $reservationModel->getByUserId((int)$_SESSION['user_id'], 50);
+        $featuredGames  = $gameModel->getAvailable(4);
 
         $this->render('dashboard/player', [
             'myReservations' => $myReservations,
-            'userName'       => $_SESSION['user_name'] ?? 'Player',
+            'userName'       => \Core\Sanitizer::str($_SESSION['user_name'] ?? 'Player', 40),
             'featuredGames'  => $featuredGames,
         ]);
     }

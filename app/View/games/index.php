@@ -168,36 +168,69 @@
 <?php if (empty($games)): ?>
     <div class="empty-state"><p>No games found matching your search.</p></div>
 <?php else: ?>
-    <p class="results-count"><?= count($games) ?> game<?= count($games) !== 1 ? 's' : '' ?> found</p>
+    <p class="results-count"><?= (int)($pagination['total'] ?? count($games)) ?> game<?= ((int)($pagination['total'] ?? count($games)) !== 1) ? 's' : '' ?> found</p>
     <div class="card-grid">
         <?php foreach ($games as $game): ?>
             <div class="card game-card">
                 <div class="card-image">
-                    <a href="<?= BASE_PATH ?>/games/<?= $game['id_game'] ?>" class="game-image-link" aria-label="View <?= htmlspecialchars($game['name_game']) ?> details">
-                        <img src="<?= game_image_url($game) ?>" alt="<?= htmlspecialchars($game['name_game']) ?>" loading="lazy">
+                    <a href="<?= BASE_PATH ?>/games/<?= (int)$game['id_game'] ?>" class="game-image-link" aria-label="View <?= htmlspecialchars($game['name_game']) ?> details">
+                        <img src="<?= game_image_url($game) ?>" alt="<?= htmlspecialchars($game['name_game']) ?>" loading="lazy" decoding="async" width="900" height="600">
                     </a>
                     <span class="game-card-category"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $game['category_game']))) ?></span>
                 </div>
                 <div class="card-body">
                     <h3><?= htmlspecialchars($game['name_game']) ?></h3>
                     <div class="game-info-row">
-                        <span>&#128101; <?= $game['players_min'] ?>–<?= $game['players_max'] ?></span>
-                        <span>&#9200; <?= $game['duration'] ?>m</span>
-                        <span class="badge badge-<?= $game['difficulty'] === 'easy' ? 'success' : ($game['difficulty'] === 'hard' ? 'danger' : 'warning') ?>"><?= ucfirst($game['difficulty']) ?></span>
+                        <span>&#128101; <?= (int)$game['players_min'] ?>–<?= (int)$game['players_max'] ?></span>
+                        <span>&#9200; <?= (int)$game['duration'] ?>m</span>
+                        <span class="badge badge-<?= $game['difficulty'] === 'easy' ? 'success' : ($game['difficulty'] === 'hard' ? 'danger' : 'warning') ?>"><?= htmlspecialchars(ucfirst($game['difficulty'])) ?></span>
                     </div>
                     <span class="badge badge-<?= $game['status_game'] === 'available' ? 'success' : 'warning' ?>">
                         <?= $game['status_game'] === 'available' ? 'Available' : 'In Use' ?>
                     </span>
                     <div class="card-actions">
-                        <a href="<?= BASE_PATH ?>/games/<?= $game['id_game'] ?>" class="btn btn-small">Details</a>
+                        <a href="<?= BASE_PATH ?>/games/<?= (int)$game['id_game'] ?>" class="btn btn-small">Details</a>
                         <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
-                            <a href="<?= BASE_PATH ?>/games/<?= $game['id_game'] ?>/edit" class="btn btn-small btn-warning">&#9998; Edit</a>
+                            <a href="<?= BASE_PATH ?>/games/<?= (int)$game['id_game'] ?>/edit" class="btn btn-small btn-warning">&#9998; Edit</a>
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
         <?php endforeach; ?>
     </div>
+    <?php if (!empty($pagination) && ($pagination['totalPages'] ?? 1) > 1): ?>
+        <nav class="pagination" aria-label="Games pages" style="display:flex;gap:.5rem;justify-content:center;margin:1.5rem 0">
+            <?php
+                $pg = (int)$pagination['page'];
+                $tp = (int)$pagination['totalPages'];
+                $base = BASE_PATH . '/games?' . http_build_query(array_filter([
+                    'q' => $filters['q'] ?? null,
+                    'category' => $filters['category'] ?? null,
+                    'difficulty' => $filters['difficulty'] ?? null,
+                    'players' => $filters['players'] ?? null,
+                    'status' => $filters['status'] ?? null,
+                ]));
+                $sep = str_contains($base, '?') && strlen($base) > strlen(BASE_PATH . '/games?') ? '&' : ($base === BASE_PATH . '/games?' ? '' : '?');
+                // http_build_query above already includes ?; normalize:
+                $base = BASE_PATH . '/games';
+                $qs = http_build_query(array_filter([
+                    'q' => $filters['q'] ?? null,
+                    'category' => $filters['category'] ?? null,
+                    'difficulty' => $filters['difficulty'] ?? null,
+                    'players' => $filters['players'] ?? null,
+                    'status' => $filters['status'] ?? null,
+                ]));
+                $prefix = $base . ($qs ? '?' . $qs . '&' : '?');
+            ?>
+            <?php if ($pg > 1): ?>
+                <a class="btn btn-small btn-secondary" href="<?= htmlspecialchars($prefix . 'page=' . ($pg - 1)) ?>">&larr; Prev</a>
+            <?php endif; ?>
+            <span class="muted">Page <?= $pg ?> / <?= $tp ?></span>
+            <?php if ($pg < $tp): ?>
+                <a class="btn btn-small btn-secondary" href="<?= htmlspecialchars($prefix . 'page=' . ($pg + 1)) ?>">Next &rarr;</a>
+            <?php endif; ?>
+        </nav>
+    <?php endif; ?>
 <?php endif; ?>
 
 <?php require __DIR__ . '/../layout/footer.php'; ?>

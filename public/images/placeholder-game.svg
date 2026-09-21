@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600" role="img" aria-label="Board game placeholder">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="600" fill="url(#g)"/>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="3">
+    <rect x="330" y="150" width="240" height="240" rx="24"/>
+    <path d="M330 210h240M330 270h240M330 330h240M390 150v240M450 150v240M510 150v240"/>
+  </g>
+  <text x="450" y="470" text-anchor="middle" font-family="sans-serif" font-size="44" fill="#ffffff">Aji L3bo</text>
+</svg>

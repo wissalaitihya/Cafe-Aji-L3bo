@@ -52,9 +52,9 @@ function renderStars(float $avg, int $total = 0, bool $big = false): string {
 
     <table class="detail-table">
         <tr><th>Category</th><td><?= htmlspecialchars(ucwords(str_replace('_', ' ', $game['category_game']))) ?></td></tr>
-        <tr><th>Players</th><td><?= $game['players_min'] ?> &ndash; <?= $game['players_max'] ?></td></tr>
-        <tr><th>Duration</th><td><?= $game['duration'] ?> minutes</td></tr>
-        <tr><th>Difficulty</th><td><?= ucfirst(htmlspecialchars($game['difficulty'])) ?></td></tr>
+        <tr><th>Players</th><td><?= (int)$game['players_min'] ?> &ndash; <?= (int)$game['players_max'] ?></td></tr>
+        <tr><th>Duration</th><td><?= (int)$game['duration'] ?> minutes</td></tr>
+        <tr><th>Difficulty</th><td><?= htmlspecialchars(ucfirst($game['difficulty'])) ?></td></tr>
     </table>
 
     <h3>Description</h3>
@@ -65,7 +65,7 @@ function renderStars(float $avg, int $total = 0, bool $big = false): string {
         <?php if (!empty($game['how_to_play'])): ?>
             <?= nl2br(htmlspecialchars($game['how_to_play'])) ?>
         <?php else: ?>
-            <span class="muted">No instructions added yet.<?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?> <a href="<?= BASE_PATH ?>/games/<?= $game['id_game'] ?>/edit">Add instructions →</a><?php endif; ?></span>
+            <span class="muted">No instructions added yet.<?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?> <a href="<?= BASE_PATH ?>/games/<?= (int)$game['id_game'] ?>/edit">Add instructions →</a><?php endif; ?></span>
         <?php endif; ?>
     </div>
 
@@ -77,8 +77,9 @@ function renderStars(float $avg, int $total = 0, bool $big = false): string {
 
     <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
         <div class="card-actions">
-            <a href="<?= BASE_PATH ?>/games/<?= $game['id_game'] ?>/edit" class="btn btn-warning">&#9998; Edit</a>
-            <form action="<?= BASE_PATH ?>/games/<?= $game['id_game'] ?>/delete" method="POST" style="display:inline" onsubmit="return confirm('Delete this game?')">
+            <a href="<?= BASE_PATH ?>/games/<?= (int)$game['id_game'] ?>/edit" class="btn btn-warning">&#9998; Edit</a>
+            <form action="<?= BASE_PATH ?>/games/<?= (int)$game['id_game'] ?>/delete" method="POST" style="display:inline" onsubmit="return confirm('Delete this game?')">
+    <?= \Core\Csrf::field() ?>
                 <button type="submit" class="btn btn-danger">Delete</button>
             </form>
         </div>
@@ -96,14 +97,15 @@ function renderStars(float $avg, int $total = 0, bool $big = false): string {
                 <?php if ($isPlayingNow ?? false): ?>
                     <p class="rating-hint" style="color:var(--purple)">&#127918; You can rate while playing!</p>
                 <?php endif; ?>
-                <form action="<?= BASE_PATH ?>/games/<?= $game['id_game'] ?>/rate" method="POST" id="rate-form">
+                <form action="<?= BASE_PATH ?>/games/<?= (int)$game['id_game'] ?>/rate" method="POST" id="rate-form">
+    <?= \Core\Csrf::field() ?>
                     <!-- Half-star picker: 5 stars, each split into left-half (n-0.5) and right-half (n) -->
                     <div class="half-star-picker" id="half-star-picker">
                         <?php for ($i = 1; $i <= 5; $i++): ?>
                             <span class="star-unit" data-n="<?= $i ?>">&#9733;</span>
                         <?php endfor; ?>
                         <input type="hidden" name="stars" id="stars-input"
-                               value="<?= $userRating ? $userRating['stars'] : '' ?>">
+                               value="<?= $userRating ? htmlspecialchars($userRating['stars']) : '' ?>">
                     </div>
                     <div class="star-value-label" id="star-value-label">
                         <?= $userRating ? number_format((float)$userRating['stars'], 1) . ' / 5' : 'Click a star to rate' ?>
@@ -146,7 +148,7 @@ function renderStars(float $avg, int $total = 0, bool $big = false): string {
         <?php foreach ($related as $r): ?>
             <div class="card game-card">
                 <div class="card-image">
-                            <a href="<?= BASE_PATH ?>/games/<?= $r['id_game'] ?>" class="game-image-link" aria-label="View <?= htmlspecialchars($r['name_game']) ?> details">
+                            <a href="<?= BASE_PATH ?>/games/<?= (int)$r['id_game'] ?>" class="game-image-link" aria-label="View <?= htmlspecialchars($r['name_game']) ?> details">
                                 <img src="<?= game_image_url($r) ?>" alt="<?= htmlspecialchars($r['name_game']) ?>" loading="lazy">
                             </a>
                     <span class="game-card-category"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $r['category_game']))) ?></span>
@@ -159,7 +161,7 @@ function renderStars(float $avg, int $total = 0, bool $big = false): string {
                         <span class="badge badge-<?= $r['difficulty'] === 'easy' ? 'success' : ($r['difficulty'] === 'hard' ? 'danger' : 'warning') ?>"><?= ucfirst($r['difficulty']) ?></span>
                     </div>
                     <div class="card-actions">
-                        <a href="<?= BASE_PATH ?>/games/<?= $r['id_game'] ?>" class="btn btn-small">View Details</a>
+                        <a href="<?= BASE_PATH ?>/games/<?= (int)$r['id_game'] ?>" class="btn btn-small">View Details</a>
                     </div>
                 </div>
             </div>

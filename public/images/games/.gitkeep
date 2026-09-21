@@ -1,0 +1,5 @@
+# Keep this folder in git. Upload game covers here, e.g.:
+#   Mafia-Game.png
+#   Codenames-Game.png
+#   Catan-Game.png
+# Referenced in DB as images/games/<FileName> (see database/schema.sql V7).

@@ -18,23 +18,25 @@
             <div class="card table-card">
                 <div class="table-icon">&#127918;</div>
                 <h3><?= htmlspecialchars($t['name_table']) ?></h3>
-                <p><strong>Capacity:</strong> <?= $t['capacity'] ?> players</p>
+                <p><strong>Capacity:</strong> <?= (int)$t['capacity'] ?> players</p>
                 <span class="badge badge-<?= $t['status_table'] === 'free' ? 'success' : 'danger' ?>">
                     <?= $t['status_table'] === 'free' ? '&#10003; Free' : '&#9679; Occupied' ?>
                 </span>
                 <div class="card-actions">
                     <?php if ($t['status_table'] === 'occupied'): ?>
-                        <form action="<?= BASE_PATH ?>/tables/<?= $t['id_table'] ?>/free" method="POST"
+                        <form action="<?= BASE_PATH ?>/tables/<?= (int)$t['id_table'] ?>/free" method="POST"
                               style="display:inline"
                               onsubmit="return confirm('Mark <?= htmlspecialchars($t['name_table']) ?> as free? This will end any active session on this table.')">
+    <?= \Core\Csrf::field() ?>
                             <button type="submit" class="btn btn-small btn-success" title="Players left early — release this table">
                                 &#10003; Set Free
                             </button>
                         </form>
                     <?php endif; ?>
-                    <a href="<?= BASE_PATH ?>/tables/<?= $t['id_table'] ?>/edit" class="btn btn-small btn-warning">&#9998; Edit</a>
-                    <form action="<?= BASE_PATH ?>/tables/<?= $t['id_table'] ?>/delete" method="POST"
+                    <a href="<?= BASE_PATH ?>/tables/<?= (int)$t['id_table'] ?>/edit" class="btn btn-small btn-warning">&#9998; Edit</a>
+                    <form action="<?= BASE_PATH ?>/tables/<?= (int)$t['id_table'] ?>/delete" method="POST"
                           style="display:inline" onsubmit="return confirm('Delete table <?= htmlspecialchars($t['name_table']) ?>?')">
+    <?= \Core\Csrf::field() ?>
                         <button type="submit" class="btn btn-small btn-danger">&#128465; Delete</button>
                     </form>
                 </div>

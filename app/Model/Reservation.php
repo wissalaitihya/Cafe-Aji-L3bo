@@ -15,14 +15,17 @@ class Reservation
 
     //  1. getAll()
 
-    public function getAll(): array
+    public function getAll(int $limit = 200, int $offset = 0): array
     {
+        $limit = max(1, min($limit, 500));
+        $offset = max(0, $offset);
         $sql = "
             SELECT
                 r.id_reservation,
                 r.people_count,
                 r.reservation_date,
                 r.reservation_time,
+                r.reservation_end_time,
                 r.status_reservation,
                 u.id_user,
                 u.name_user,
@@ -36,9 +39,12 @@ class Reservation
             LEFT JOIN tables t ON r.id_table = t.id_table
             LEFT JOIN games  g ON r.id_game  = g.id_game
             ORDER BY r.reservation_date ASC, r.reservation_time ASC
+            LIMIT :lim OFFSET :off
         ";
 
         $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':lim', $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':off', $offset, \PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -53,6 +59,7 @@ class Reservation
                 r.people_count,
                 r.reservation_date,
                 r.reservation_time,
+                r.reservation_end_time,
                 r.status_reservation,
                 u.id_user,
                 u.name_user,
@@ -60,6 +67,7 @@ class Reservation
                 t.id_table,
                 t.name_table,
                 t.capacity,
+                g.id_game,
                 g.name_game
             FROM reservations r
             LEFT JOIN users  u ON r.id_user  = u.id_user
@@ -170,14 +178,16 @@ class Reservation
     }
 
     //  6. getByUserId($userId)
-    public function getByUserId(int $userId): array
+    public function getByUserId(int $userId, int $limit = 100): array
     {
+        $limit = max(1, min($limit, 200));
         $sql = "
             SELECT
                 r.id_reservation,
                 r.people_count,
                 r.reservation_date,
                 r.reservation_time,
+                r.reservation_end_time,
                 r.status_reservation,
                 t.id_table,
                 t.name_table,
@@ -188,10 +198,12 @@ class Reservation
             LEFT JOIN games  g ON r.id_game  = g.id_game
             WHERE r.id_user = :user_id
             ORDER BY r.reservation_date DESC, r.reservation_time DESC
+            LIMIT :lim
         ";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindParam(':user_id', $userId, \PDO::PARAM_INT);
+        $stmt->bindValue(':user_id', $userId, \PDO::PARAM_INT);
+        $stmt->bindValue(':lim', $limit, \PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -405,6 +417,9 @@ class Reservation
 
     public function getMonthStats(): array
     {
+        // Sargable range (uses index on reservation_date instead of YEAR()/MONTH()).
+        $first = date('Y-m-01');
+        $next = date('Y-m-01', strtotime('+1 month'));
         $sql = "
             SELECT
                 COUNT(*) AS total,
@@ -412,10 +427,11 @@ class Reservation
                 SUM(status_reservation = 'pending')   AS pending,
                 SUM(status_reservation = 'cancelled') AS cancelled
             FROM reservations
-            WHERE YEAR(reservation_date)  = YEAR(CURDATE())
-              AND MONTH(reservation_date) = MONTH(CURDATE())
+            WHERE reservation_date >= :first AND reservation_date < :next
         ";
-        $row = $this->pdo->query($sql)->fetch(\PDO::FETCH_ASSOC);
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':first' => $first, ':next' => $next]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
         return [
             'total'     => (int)($row['total']     ?? 0),
             'confirmed' => (int)($row['confirmed'] ?? 0),

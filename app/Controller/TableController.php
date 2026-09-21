@@ -4,6 +4,9 @@ namespace App\Controller;
 
 use App\Model\Table;
 use App\Model\Session;
+use Core\Csrf;
+use Core\Sanitizer;
+use Core\Validator;
 
 class TableController
 {
@@ -27,16 +30,29 @@ class TableController
     public function store()
     {
         $this->requireAdmin();
+        if (($csrfError = Csrf::requireValid()) !== null) {
+            $this->render('tables/create', ['error' => $csrfError, 'data' => []]);
+            return;
+        }
 
         $data = [
-            'name_table'   => trim($_POST['name_table'] ?? ''),
-            'capacity'     => (int)($_POST['capacity'] ?? 0),
-            'status_table' => $_POST['status_table'] ?? 'free',
+            'name_table'   => Sanitizer::str($_POST['name_table'] ?? '', 20),
+            'capacity'     => Sanitizer::int($_POST['capacity'] ?? 0, 0),
+            'status_table' => Sanitizer::str($_POST['status_table'] ?? 'free', 10),
         ];
 
         $allowedStatus = ['free', 'occupied'];
         if (!in_array($data['status_table'], $allowedStatus, true)) {
             $data['status_table'] = 'free';
+        }
+
+        if (($e = Validator::name($data['name_table'], 20)) !== null
+            || ($e = Validator::intRange($data['capacity'], 1, 30, 'capacity')) !== null) {
+            $this->render('tables/create', [
+                'error' => $e,
+                'data'  => $data,
+            ]);
+            return;
         }
 
         if (empty($data['name_table']) || $data['capacity'] < 1) {
@@ -77,16 +93,32 @@ class TableController
     public function update($id)
     {
         $this->requireAdmin();
+        if (($csrfError = Csrf::requireValid()) !== null) {
+            http_response_code(419);
+            echo $csrfError;
+            return;
+        }
 
         $data = [
-            'name_table'   => trim($_POST['name_table'] ?? ''),
-            'capacity'     => (int)($_POST['capacity'] ?? 0),
-            'status_table' => $_POST['status_table'] ?? 'free',
+            'name_table'   => Sanitizer::str($_POST['name_table'] ?? '', 20),
+            'capacity'     => Sanitizer::int($_POST['capacity'] ?? 0, 0),
+            'status_table' => Sanitizer::str($_POST['status_table'] ?? 'free', 10),
         ];
 
         $allowedStatus = ['free', 'occupied'];
         if (!in_array($data['status_table'], $allowedStatus, true)) {
             $data['status_table'] = 'free';
+        }
+
+        if (($e = Validator::name($data['name_table'], 20)) !== null
+            || ($e = Validator::intRange($data['capacity'], 1, 30, 'capacity')) !== null) {
+            $tableModel = new Table();
+            $table = $tableModel->getById((int)$id);
+            $this->render('tables/edit', [
+                'error' => $e,
+                'table' => array_merge($table ?? [], $data),
+            ]);
+            return;
         }
 
         if (empty($data['name_table']) || $data['capacity'] < 1) {
@@ -114,6 +146,11 @@ class TableController
     public function destroy($id)
     {
         $this->requireAdmin();
+        if (($csrfError = Csrf::requireValid()) !== null) {
+            http_response_code(419);
+            echo $csrfError;
+            return;
+        }
 
         $tableModel = new Table();
         $tableModel->delete((int)$id);
@@ -127,6 +164,11 @@ class TableController
     public function setFree($id)
     {
         $this->requireAdmin();
+        if (($csrfError = Csrf::requireValid()) !== null) {
+            http_response_code(419);
+            echo $csrfError;
+            return;
+        }
 
         $id = (int)$id;
         $sessionModel = new Session();

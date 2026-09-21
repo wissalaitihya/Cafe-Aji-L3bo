@@ -56,12 +56,12 @@
             </thead>
             <tbody>
                 <?php foreach ($reservations as $r):
-                    $status       = $r['status_reservation'];
+                    $status       = in_array($r['status_reservation'] ?? '', ['pending','confirmed','cancelled'], true) ? $r['status_reservation'] : 'pending';
                     $endTime      = isset($r['reservation_end_time']) ? substr($r['reservation_end_time'], 0, 5) : '?';
                     $startTime    = substr($r['reservation_time'], 0, 5);
                     $activeSession = $sessionsByReservation[(int)$r['id_reservation']] ?? null;
                 ?>
-                    <tr class="res-row-<?= $status ?>">
+                    <tr class="res-row-<?= htmlspecialchars($status) ?>">
                         <td>
                             <div class="res-player-cell">
                                 <span class="res-player-name"><?= htmlspecialchars($r['name_user'] ?? 'N/A') ?></span>
@@ -72,26 +72,27 @@
                         </td>
                         <td><?= htmlspecialchars($r['name_table'] ?? '-') ?></td>
                         <td><?= !empty($r['name_game']) ? htmlspecialchars($r['name_game']) : '<span class="muted">—</span>' ?></td>
-                        <td><span class="res-people-badge">&#128101; <?= $r['people_count'] ?></span></td>
-                        <td><span class="res-date"><?= $r['reservation_date'] ?></span></td>
+                        <td><span class="res-people-badge">&#128101; <?= (int)$r['people_count'] ?></span></td>
+                        <td><span class="res-date"><?= htmlspecialchars($r['reservation_date']) ?></span></td>
                         <td>
                             <span class="res-time-slot">
-                                <?= $startTime ?> <span class="res-time-arrow">&#8594;</span> <?= $endTime ?>
+                                <?= htmlspecialchars($startTime) ?> <span class="res-time-arrow">&#8594;</span> <?= htmlspecialchars($endTime) ?>
                             </span>
                         </td>
                         <td>
                             <span class="badge badge-<?= $status === 'confirmed' ? 'success' : ($status === 'cancelled' ? 'danger' : 'warning') ?>">
-                                <?= $status ?>
+                                <?= htmlspecialchars($status) ?>
                             </span>
                         </td>
                         <td>
                             <?php if ($activeSession): ?>
                                 <div class="session-inline">
                                     <span class="res-time-slot" style="font-size:0.75rem;">
-                                        <?= substr($activeSession['start_time'], 11, 5) ?>
-                                        (<?= $activeSession['elapsed_minutes'] ?>m)
+                                        <?= htmlspecialchars(substr($activeSession['start_time'], 11, 5)) ?>
+                                        (<?= (int)$activeSession['elapsed_minutes'] ?>m)
                                     </span>
-                                    <form action="<?= BASE_PATH ?>/sessions/<?= $activeSession['id_session'] ?>/end" method="POST" style="display:inline">
+                                    <form action="<?= BASE_PATH ?>/sessions/<?= (int)$activeSession['id_session'] ?>/end" method="POST" style="display:inline">
+    <?= \Core\Csrf::field() ?>
                                         <button type="submit" class="btn btn-small btn-danger"
                                                 onclick="return confirm('End this session?')">&#9632; End</button>
                                     </form>
@@ -103,17 +104,20 @@
                         <td>
                             <?php if ($status === 'pending'): ?>
                                 <div class="res-action-group">
-                                    <form action="<?= BASE_PATH ?>/reservations/<?= $r['id_reservation'] ?>/status" method="POST" style="display:inline">
+                                    <form action="<?= BASE_PATH ?>/reservations/<?= (int)$r['id_reservation'] ?>/status" method="POST" style="display:inline">
+    <?= \Core\Csrf::field() ?>
                                         <input type="hidden" name="status" value="confirmed">
                                         <button type="submit" class="btn btn-small btn-success" title="Confirm">&#10003; Confirm</button>
                                     </form>
-                                    <form action="<?= BASE_PATH ?>/reservations/<?= $r['id_reservation'] ?>/status" method="POST" style="display:inline">
+                                    <form action="<?= BASE_PATH ?>/reservations/<?= (int)$r['id_reservation'] ?>/status" method="POST" style="display:inline">
+    <?= \Core\Csrf::field() ?>
                                         <input type="hidden" name="status" value="cancelled">
                                         <button type="submit" class="btn btn-small btn-danger" title="Cancel">&#10005;</button>
                                     </form>
                                 </div>
                             <?php elseif ($status === 'confirmed'): ?>
-                                <form action="<?= BASE_PATH ?>/reservations/<?= $r['id_reservation'] ?>/status" method="POST" style="display:inline">
+                                <form action="<?= BASE_PATH ?>/reservations/<?= (int)$r['id_reservation'] ?>/status" method="POST" style="display:inline">
+    <?= \Core\Csrf::field() ?>
                                     <input type="hidden" name="status" value="cancelled">
                                     <button type="submit" class="btn btn-small btn-danger" title="Cancel"
                                             onclick="return confirm('Cancel this confirmed reservation?')">&#10005; Cancel</button>

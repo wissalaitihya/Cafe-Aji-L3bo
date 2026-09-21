@@ -6,6 +6,7 @@ require __DIR__ . '/../layout/header.php';
     <h1>&#9654; Start New Session</h1>
 </div>
 <form action="<?= BASE_PATH ?>/sessions" method="POST" class="form-card">
+    <?= \Core\Csrf::field() ?>
     <div class="form-group">
         <label for="id_reservation">Reservation</label>
         <?php if (empty($reservations)): ?>
@@ -14,11 +15,11 @@ require __DIR__ . '/../layout/header.php';
         <select id="id_reservation" name="id_reservation" required>
             <option value="">-- Select a reservation --</option>
             <?php foreach ($reservations as $r): ?>
-                <option value="<?= $r['id_reservation'] ?>"
-                        data-game="<?= $r['id_game'] ?? '' ?>"
-                        data-table="<?= $r['id_table'] ?>">
-                    #<?= $r['id_reservation'] ?> - <?= htmlspecialchars($r['name_user'] ?? '') ?>
-                    (<?= $r['reservation_date'] ?> <?= substr($r['reservation_time'], 0, 5) ?> → <?= substr($r['reservation_end_time'], 0, 5) ?>)
+                <option value="<?= (int)$r['id_reservation'] ?>"
+                        data-game="<?= (int)($r['id_game'] ?? 0) ?>"
+                        data-table="<?= (int)$r['id_table'] ?>">
+                    #<?= (int)$r['id_reservation'] ?> - <?= htmlspecialchars($r['name_user'] ?? '') ?>
+                    (<?= htmlspecialchars($r['reservation_date']) ?> <?= htmlspecialchars(substr($r['reservation_time'], 0, 5)) ?> → <?= htmlspecialchars(substr($r['reservation_end_time'], 0, 5)) ?>)
                     — <?= htmlspecialchars($r['name_table'] ?? '') ?>
                     <?= $r['name_game'] ? '— ' . htmlspecialchars($r['name_game']) : '' ?>
                 </option>
@@ -32,7 +33,7 @@ require __DIR__ . '/../layout/header.php';
         <select id="id_game" name="id_game" required>
             <option value="">-- Select a game --</option>
             <?php foreach ($games as $game): ?>
-                <option value="<?= $game['id_game'] ?>"><?= htmlspecialchars($game['name_game']) ?></option>
+                <option value="<?= (int)$game['id_game'] ?>"><?= htmlspecialchars($game['name_game']) ?></option>
             <?php endforeach; ?>
         </select>
     </div>
@@ -42,8 +43,8 @@ require __DIR__ . '/../layout/header.php';
         <select id="id_table" name="id_table" required>
             <option value="">-- Select a table --</option>
             <?php foreach ($tables as $table): ?>
-                <option value="<?= $table['id_table'] ?>">
-                    <?= htmlspecialchars($table['name_table']) ?> (capacity: <?= $table['capacity'] ?>)
+                <option value="<?= (int)$table['id_table'] ?>">
+                    <?= htmlspecialchars($table['name_table']) ?> (capacity: <?= (int)$table['capacity'] ?>)
                 </option>
             <?php endforeach; ?>
         </select>
@@ -55,7 +56,7 @@ require __DIR__ . '/../layout/header.php';
     </div>
 </form>
 <script>
-var gamesMap = <?= json_encode($gamesByReservation ?? []) ?>;
+var gamesMap = <?= json_encode($gamesByReservation ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
 
 var resSelect = document.getElementById('id_reservation');
 if (resSelect) {

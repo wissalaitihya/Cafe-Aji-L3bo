@@ -63,7 +63,7 @@
                 $startT = substr($r['reservation_time'], 0, 5);
                 $isToday = ($r['reservation_date'] === $today);
             ?>
-            <div class="upcoming-card status-border-<?= $r['status_reservation'] ?>">
+            <div class="upcoming-card status-border-<?= htmlspecialchars($r['status_reservation']) ?>">
                 <div class="upcoming-card-left">
                     <div class="upcoming-game-name"><?= htmlspecialchars($r['name_game'] ?? 'Free play') ?></div>
                     <div class="upcoming-meta">
@@ -72,12 +72,12 @@
                         </span>
                         <span>⏰ <?= $startT ?><?= $endT ? ' → ' . $endT : '' ?></span>
                         <span>🪑 <?= htmlspecialchars($r['name_table'] ?? '-') ?></span>
-                        <span>👥 <?= $r['people_count'] ?> people</span>
+                        <span>👥 <?= (int)$r['people_count'] ?> people</span>
                     </div>
                 </div>
                 <div class="upcoming-card-right">
                     <span class="badge badge-<?= $r['status_reservation'] === 'confirmed' ? 'success' : 'warning' ?>">
-                        <?= ucfirst($r['status_reservation']) ?>
+                        <?= htmlspecialchars(ucfirst($r['status_reservation'])) ?>
                     </span>
                 </div>
             </div>
@@ -100,7 +100,7 @@
         <?php foreach ($featuredGames as $g): ?>
             <div class="card game-card">
                 <div class="card-image">
-                    <a href="<?= BASE_PATH ?>/games/<?= $g['id_game'] ?>" class="game-image-link" aria-label="View <?= htmlspecialchars($g['name_game']) ?> details">
+                    <a href="<?= BASE_PATH ?>/games/<?= (int)$g['id_game'] ?>" class="game-image-link" aria-label="View <?= htmlspecialchars($g['name_game']) ?> details">
                         <img src="<?= game_image_url($g) ?>" alt="<?= htmlspecialchars($g['name_game']) ?>" loading="lazy">
                     </a>
                     <span class="game-card-category"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $g['category_game']))) ?></span>
@@ -108,46 +108,13 @@
                 <div class="card-body">
                     <h3><?= htmlspecialchars($g['name_game']) ?></h3>
                     <div class="game-info-row">
-                        <span>&#128101; <?= $g['players_min'] ?>&ndash;<?= $g['players_max'] ?></span>
-                        <span>&#9200; <?= $g['duration'] ?>m</span>
-                        <span class="badge badge-<?= $g['difficulty'] === 'easy' ? 'success' : ($g['difficulty'] === 'hard' ? 'danger' : 'warning') ?>"><?= ucfirst($g['difficulty']) ?></span>
+                        <span>&#128101; <?= (int)$g['players_min'] ?>&ndash;<?= (int)$g['players_max'] ?></span>
+                        <span>&#9200; <?= (int)$g['duration'] ?>m</span>
+                        <span class="badge badge-<?= $g['difficulty'] === 'easy' ? 'success' : ($g['difficulty'] === 'hard' ? 'danger' : 'warning') ?>"><?= htmlspecialchars(ucfirst($g['difficulty'])) ?></span>
                     </div>
                     <div class="card-actions">
-                        <a href="<?= BASE_PATH ?>/games/<?= $g['id_game'] ?>" class="btn btn-small">Details</a>
+                        <a href="<?= BASE_PATH ?>/games/<?= (int)$g['id_game'] ?>" class="btn btn-small">Details</a>
                         <a href="<?= BASE_PATH ?>/reservations/create?id_game=<?= (int)$g['id_game'] ?>" class="btn btn-small btn-success">Book</a>
-                    </div>
-                </div>
-            </div>
-        <?php endforeach; ?>
-    </div>
-</div>
-<?php endif; ?>
-
-<!-- Featured Games -->
-<?php if (!empty($featuredGames)): ?>
-<div class="section-block">
-    <div class="section-block-header">
-        <h2>&#127918; Featured Games</h2>
-        <a href="<?= BASE_PATH ?>/games" class="btn btn-small btn-secondary">See All</a>
-    </div>
-    <div class="card-grid">
-        <?php foreach ($featuredGames as $g): ?>
-            <div class="card game-card">
-                <div class="card-image">
-                    <a href="<?= BASE_PATH ?>/games/<?= $g['id_game'] ?>" class="game-image-link" aria-label="View <?= htmlspecialchars($g['name_game']) ?> details">
-                        <img src="<?= game_image_url($g) ?>" alt="<?= htmlspecialchars($g['name_game']) ?>" loading="lazy">
-                    </a>
-                    <span class="game-card-category"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $g['category_game']))) ?></span>
-                </div>
-                <div class="card-body">
-                    <h3><?= htmlspecialchars($g['name_game']) ?></h3>
-                    <div class="game-info-row">
-                        <span>&#128101; <?= $g['players_min'] ?>&ndash;<?= $g['players_max'] ?></span>
-                        <span>&#9200; <?= $g['duration'] ?>m</span>
-                        <span class="badge badge-<?= $g['difficulty'] === 'easy' ? 'success' : ($g['difficulty'] === 'hard' ? 'danger' : 'warning') ?>"><?= ucfirst($g['difficulty']) ?></span>
-                    </div>
-                    <div class="card-actions">
-                        <a href="<?= BASE_PATH ?>/games/<?= $g['id_game'] ?>" class="btn btn-small">Details</a>
                     </div>
                 </div>
             </div>

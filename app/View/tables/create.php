@@ -10,9 +10,10 @@
 <?php endif; ?>
 
 <form action="<?= BASE_PATH ?>/tables" method="POST" class="form-card">
+    <?= \Core\Csrf::field() ?>
     <div class="form-group">
         <label for="name_table">Table Name</label>
-        <input type="text" id="name_table" name="name_table"
+        <input type="text" id="name_table" name="name_table" maxlength="20" minlength="2"
                value="<?= htmlspecialchars($data['name_table'] ?? '') ?>"
                placeholder="e.g. Table 5" required>
     </div>

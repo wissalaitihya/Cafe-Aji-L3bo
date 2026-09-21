@@ -64,9 +64,9 @@
                     &#128197; <?= $isToday ? '<strong>Today</strong>' : $dateStr ?>
                 </span>
                 <span>
-                    &#9200; <?= $startT ?>
+                    &#9200; <?= htmlspecialchars($startT) ?>
                     <?php if ($endT): ?>
-                        <span class="time-arrow">&#8594;</span> <?= $endT ?>
+                        <span class="time-arrow">&#8594;</span> <?= htmlspecialchars($endT) ?>
                     <?php endif; ?>
                 </span>
                 <span>&#129681; <?= htmlspecialchars($r['name_table'] ?? '-') ?></span>
@@ -76,8 +76,9 @@
         <!-- Action -->
         <div class="my-res-card-action">
             <?php if (in_array($status, ['pending', 'confirmed'])): ?>
-                <form method="POST" action="<?= BASE_PATH ?>/reservations/<?= $r['id_reservation'] ?>/cancel"
+                <form method="POST" action="<?= BASE_PATH ?>/reservations/<?= (int)$r['id_reservation'] ?>/cancel"
                       onsubmit="return confirm('Cancel this reservation?')">
+    <?= \Core\Csrf::field() ?>
                     <button type="submit" class="btn btn-small btn-danger">&#10005; Cancel</button>
                 </form>
             <?php endif; ?>

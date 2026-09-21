@@ -9,6 +9,7 @@ $router->post('/login', 'AuthController@login');
 $router->get('/register', 'AuthController@registerForm');
 $router->post('/register', 'AuthController@register');
 $router->get('/logout', 'AuthController@logout');
+$router->post('/logout', 'AuthController@logout');
 
 // ── Dashboards ──
 $router->get('/admin/dashboard', 'DashboardController@admin');
@@ -47,6 +48,7 @@ $router->post('/tables/{id}/free', 'TableController@setFree');
 $router->get('/api/available-tables', 'ReservationController@apiAvailableTables');
 $router->get('/api/available-games', 'ReservationController@apiAvailableGames');
 $router->get('/api/recommend', 'GameController@apiRecommend');
+$router->get('/api/games/search', 'GameController@apiSearch');
 
 // ── Sessions ──
 $router->get('/sessions', 'SessionController@dashboard');

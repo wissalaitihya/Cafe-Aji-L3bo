@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aji L3bo Café</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Orbitron:wght@500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= BASE_PATH ?>/css/style.css">
 </head>
 <body>
@@ -18,12 +21,31 @@
         return (strpos($cp, $seg) !== false) ? ' active' : '';
     }
     function game_image_url(array $game): string {
+        // Known covers in public/images/games/ (upload the .png files there).
+        static $known = [
+            'Mafia'     => 'images/games/Mafia-Game.png',
+            'Codenames' => 'images/games/Codenames-Game.png',
+            'Catan'     => 'images/games/Catan-Game.png',
+        ];
+        $candidates = [];
         if (!empty($game['image_game'])) {
-            return BASE_PATH . '/' . htmlspecialchars($game['image_game']);
+            $candidates[] = ltrim($game['image_game'], '/');
         }
-        $seed = max(1, (int)($game['id_game'] ?? 1));
-        $category = rawurlencode(str_replace('_', '-', $game['category_game'] ?? 'board-game'));
-        return 'https://loremflickr.com/900/600/boardgame,' . $category . '?lock=' . $seed;
+        $name = $game['name_game'] ?? '';
+        if (isset($known[$name])) {
+            $candidates[] = $known[$name];
+        }
+        foreach ($candidates as $rel) {
+            // Guard path traversal, then serve file only if it exists on disk.
+            if (str_contains($rel, '..') || !preg_match('#^images/games/[A-Za-z0-9.\-]+$#', $rel)) {
+                continue;
+            }
+            if (is_file(__DIR__ . '/../../../public/' . $rel)) {
+                return BASE_PATH . '/' . htmlspecialchars($rel);
+            }
+        }
+        // Local placeholder — avoids N external TLS handshakes per catalogue load.
+        return BASE_PATH . '/images/placeholder-game.svg';
     }
     $mainPageClass = '';
     if ($userRole !== 'guest') {
@@ -46,7 +68,7 @@
         <a href="<?= BASE_PATH ?>/games" class="public-logo">🎲 <span>Aji L3bo</span></a>
         <form method="GET" action="<?= BASE_PATH ?>/games" class="global-search" role="search">
             <span class="global-search-icon" aria-hidden="true">&#128269;</span>
-            <input type="search" name="q" placeholder="Search games" aria-label="Search games">
+            <input type="search" name="q" placeholder="Search games" aria-label="Search games" maxlength="100" autocomplete="off">
             <div class="global-search-results" hidden></div>
         </form>
         <button class="public-nav-toggle" id="public-nav-toggle" aria-label="Menu" aria-expanded="false">☰</button>
@@ -89,7 +111,10 @@
         </nav>
 
         <div class="sidebar-foot">
-            <a href="<?= BASE_PATH ?>/logout" data-tooltip="Logout" class="sidebar-link sidebar-logout"><span class="si">🚪</span><span class="sl">Logout</span></a>
+            <form method="POST" action="<?= BASE_PATH ?>/logout" style="margin:0">
+                <?= \Core\Csrf::field() ?>
+                <button type="submit" data-tooltip="Logout" class="sidebar-link sidebar-logout" style="width:100%;background:none;border:0;cursor:pointer"><span class="si">🚪</span><span class="sl">Logout</span></button>
+            </form>
         </div>
     </aside>
 
@@ -98,24 +123,28 @@
             <button class="topbar-menu-btn" id="topbar-menu" aria-controls="sidebar" aria-expanded="false" title="Open navigation" aria-label="Open navigation">☰</button>
             <div class="profile-anchor">
                 <button type="button" class="topbar-profile profile-trigger" id="profile-trigger" aria-expanded="false" aria-controls="profile-popover" title="Open profile">
-                    <span class="sidebar-avatar"><?= strtoupper(substr($_SESSION['user_name'] ?? 'U', 0, 1)) ?></span>
+                    <span class="sidebar-avatar"><?= htmlspecialchars(strtoupper(mb_substr($_SESSION['user_name'] ?? 'U', 0, 1))) ?></span>
                     <span class="topbar-profile-info">
                         <strong><?= htmlspecialchars($_SESSION['user_name'] ?? 'User') ?></strong>
-                        <small><?= ucfirst($userRole) ?></small>
+                        <small><?= htmlspecialchars(ucfirst($userRole)) ?></small>
                     </span>
                     <span class="profile-chevron" aria-hidden="true">&#8250;</span>
                 </button>
                 <div class="profile-popover" id="profile-popover" hidden>
                     <span class="profile-popover-kicker">Signed in as</span>
                     <strong><?= htmlspecialchars($_SESSION['user_name'] ?? 'User') ?></strong>
-                    <span><?= ucfirst($userRole) ?> account</span>
+                    <span><?= htmlspecialchars(ucfirst($userRole)) ?> account</span>
                     <a href="<?= $logoHref ?>">Open dashboard</a>
+                    <form method="POST" action="<?= BASE_PATH ?>/logout" style="margin-top:.5rem">
+                        <?= \Core\Csrf::field() ?>
+                        <button type="submit" class="btn btn-small btn-secondary">Logout</button>
+                    </form>
                 </div>
             </div>
             <span class="topbar-logo-mobile"><a href="<?= $logoHref ?>">🎲 Aji L3bo</a></span>
             <form method="GET" action="<?= BASE_PATH ?>/games" class="global-search" role="search">
                 <span class="global-search-icon" aria-hidden="true">&#128269;</span>
-                <input type="search" name="q" placeholder="Search games" aria-label="Search games">
+                <input type="search" name="q" placeholder="Search games" aria-label="Search games" maxlength="100" autocomplete="off">
                 <div class="global-search-results" hidden></div>
             </form>
         </header>

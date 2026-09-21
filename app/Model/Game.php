@@ -9,36 +9,63 @@ class Game
 {
     private PDO $pdo;
 
+    /** Card-list columns only (no TEXT blobs) — keeps catalogue fast. */
+    private const CARD_COLUMNS = 'id_game, name_game, players_min, players_max, duration, difficulty, image_game, status_game, category_game';
+
     public function __construct()
     {
         $this->pdo = Database::getInstance()->getConnection();
     }
 
-    public function getAll(): array
+    public function getAll(int $limit = 100, int $offset = 0): array
     {
         try {
-            $stmt = $this->pdo->query("SELECT * FROM games ORDER BY name_game ASC");
+            $limit = max(1, min($limit, 100));
+            $offset = max(0, $offset);
+            $stmt = $this->pdo->prepare("SELECT " . self::CARD_COLUMNS . " FROM games ORDER BY name_game ASC LIMIT :lim OFFSET :off");
+            $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
+            $stmt->execute();
             return $stmt->fetchAll();
         } catch (\PDOException $e) {
             return [];
         }
     }
 
-    public function getAvailable(): array
+    public function countAll(array $filters = []): int
     {
         try {
-            $stmt = $this->pdo->query("SELECT * FROM games WHERE status_game = 'available' ORDER BY name_game ASC");
+            [$where, $params] = $this->buildSearchWhere($filters);
+            $sql = "SELECT COUNT(*) FROM games" . ($where ? " WHERE {$where}" : "");
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            return (int) $stmt->fetchColumn();
+        } catch (\PDOException $e) {
+            return 0;
+        }
+    }
+
+    public function getAvailable(int $limit = 100, int $offset = 0): array
+    {
+        try {
+            $limit = max(1, min($limit, 100));
+            $offset = max(0, $offset);
+            $stmt = $this->pdo->prepare("SELECT " . self::CARD_COLUMNS . " FROM games WHERE status_game = 'available' ORDER BY name_game ASC LIMIT :lim OFFSET :off");
+            $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
+            $stmt->execute();
             return $stmt->fetchAll();
         } catch (\PDOException $e) {
             return [];
         }
     }
 
-    public function getAvailableForSlot(string $date, string $time): array
+    public function getAvailableForSlot(string $date, string $time, int $limit = 100): array
     {
         try {
+            $limit = max(1, min($limit, 100));
             $sql = "
-                SELECT * FROM games g
+                SELECT " . self::CARD_COLUMNS . " FROM games g
                 WHERE g.status_game = 'available'
                   AND g.id_game NOT IN (
                       SELECT r.id_game FROM reservations r
@@ -50,9 +77,14 @@ class Game
                         AND ADDTIME(:time2, SEC_TO_TIME(COALESCE(rg.duration, 120) * 60)) > r.reservation_time
                   )
                 ORDER BY g.name_game ASC
+                LIMIT :lim
             ";
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([':date' => $date, ':time' => $time, ':time2' => $time]);
+            $stmt->bindValue(':date', $date);
+            $stmt->bindValue(':time', $time);
+            $stmt->bindValue(':time2', $time);
+            $stmt->bindValue(':lim', $limit, \PDO::PARAM_INT);
+            $stmt->execute();
             return $stmt->fetchAll();
         } catch (\PDOException $e) {
             return [];
@@ -145,15 +177,78 @@ class Game
     public function getRelated(int $currentId, string $category, int $limit = 3): array
     {
         try {
+            // Avoid ORDER BY RAND() full-sort: fetch recent candidates, shuffle in PHP.
             $stmt = $this->pdo->prepare(
-                "SELECT * FROM games
+                "SELECT " . self::CARD_COLUMNS . " FROM games
                  WHERE category_game = :category AND id_game != :id AND status_game = 'available'
-                 ORDER BY RAND()
-                 LIMIT :lim"
+                 ORDER BY id_game DESC
+                 LIMIT 20"
             );
             $stmt->bindValue(':category', $category);
             $stmt->bindValue(':id', $currentId, \PDO::PARAM_INT);
-            $stmt->bindValue(':lim', $limit, \PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll();
+            if (count($rows) > $limit) {
+                shuffle($rows);
+                $rows = array_slice($rows, 0, $limit);
+            }
+            return $rows;
+        } catch (\PDOException $e) {
+            return [];
+        }
+    }
+
+    /** Shared WHERE builder so search() + countAll() stay in sync (all values bound). */
+    private function buildSearchWhere(array $filters): array
+    {
+        $wheres = [];
+        $params = [];
+
+        if (!empty($filters['q'])) {
+            $wheres[] = "(name_game LIKE :q OR description_game LIKE :q2)";
+            $params[':q']  = '%' . $filters['q'] . '%';
+            $params[':q2'] = '%' . $filters['q'] . '%';
+        }
+        if (!empty($filters['category'])) {
+            $wheres[] = "category_game = :category";
+            $params[':category'] = $filters['category'];
+        }
+        if (!empty($filters['difficulty'])) {
+            $wheres[] = "difficulty = :difficulty";
+            $params[':difficulty'] = $filters['difficulty'];
+        }
+        if (!empty($filters['players'])) {
+            $p = (int)$filters['players'];
+            $wheres[] = "players_min <= :pmin AND players_max >= :pmax";
+            $params[':pmin'] = $p;
+            $params[':pmax'] = $p;
+        }
+        if (!empty($filters['status'])) {
+            $wheres[] = "status_game = :status";
+            $params[':status'] = $filters['status'];
+        }
+        return [$wheres ? implode(' AND ', $wheres) : '', $params];
+    }
+
+    public function search(array $filters, int $limit = 48, int $offset = 0): array
+    {
+        try {
+            $limit = max(1, min($limit, 100));
+            $offset = max(0, $offset);
+            [$where, $params] = $this->buildSearchWhere($filters);
+
+            $sql = "SELECT " . self::CARD_COLUMNS . " FROM games";
+            if ($where) {
+                $sql .= " WHERE " . $where;
+            }
+            $sql .= " ORDER BY name_game ASC LIMIT :lim OFFSET :off";
+
+            $stmt = $this->pdo->prepare($sql);
+            foreach ($params as $k => $v) {
+                $stmt->bindValue($k, $v);
+            }
+            $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll();
         } catch (\PDOException $e) {
@@ -161,45 +256,21 @@ class Game
         }
     }
 
-    public function search(array $filters): array
+    /** Lightweight autocomplete: id + name only, capped at 6. */
+    public function searchNames(string $q, int $limit = 6): array
     {
         try {
-            $wheres = [];
-            $params = [];
-
-            if (!empty($filters['q'])) {
-                $wheres[] = "(name_game LIKE :q OR description_game LIKE :q2)";
-                $params[':q']  = '%' . $filters['q'] . '%';
-                $params[':q2'] = '%' . $filters['q'] . '%';
+            $q = trim(mb_substr($q, 0, 100));
+            if (mb_strlen($q) < 2) {
+                return [];
             }
-            if (!empty($filters['category'])) {
-                $wheres[] = "category_game = :category";
-                $params[':category'] = $filters['category'];
-            }
-            if (!empty($filters['difficulty'])) {
-                $wheres[] = "difficulty = :difficulty";
-                $params[':difficulty'] = $filters['difficulty'];
-            }
-            if (!empty($filters['players'])) {
-                $p = (int)$filters['players'];
-                $wheres[] = "players_min <= :pmin AND players_max >= :pmax";
-                $params[':pmin'] = $p;
-                $params[':pmax'] = $p;
-            }
-            if (!empty($filters['status'])) {
-                $wheres[] = "status_game = :status";
-                $params[':status'] = $filters['status'];
-            }
-
-            $sql = "SELECT * FROM games";
-            if ($wheres) {
-                $sql .= " WHERE " . implode(' AND ', $wheres);
-            }
-            $sql .= " ORDER BY name_game ASC";
-
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute($params);
-            return $stmt->fetchAll();
+            $stmt = $this->pdo->prepare(
+                "SELECT id_game, name_game FROM games WHERE name_game LIKE :q ORDER BY name_game ASC LIMIT :lim"
+            );
+            $stmt->bindValue(':q', '%' . $q . '%');
+            $stmt->bindValue(':lim', max(1, min($limit, 10)), PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\PDOException $e) {
             return [];
         }
@@ -208,7 +279,9 @@ class Game
     public function getStats(): array
     {
         try {
-            $available = count($this->getAvailable());
+            $available = (int) $this->pdo->query(
+                "SELECT COUNT(*) FROM games WHERE status_game = 'available'"
+            )->fetchColumn();
 
             // Most reserved game
             $popular = null;

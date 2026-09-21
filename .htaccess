@@ -1,5 +1,8 @@
 RewriteEngine On
 
+# ── Never expose secrets/source if DocumentRoot is misconfigured ──
+RewriteRule ^(\.env|\.git|config/|database/|vendor/|docker-compose\.yml|Dockerfile|composer\.(json|lock)) - [F,L]
+
 # GUARD: requests already pointing into public/ are served as-is
 # (prevents infinite rewrite loops)
 RewriteRule ^public/ - [L]

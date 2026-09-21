@@ -34,8 +34,8 @@
                 <?php foreach ($tables as $table): ?>
                     <tr>
                         <td><?= htmlspecialchars($table['name_table']) ?></td>
-                        <td><?= $table['capacity'] ?> people</td>
-                        <td><a href="<?= BASE_PATH ?>/reservations/create?id_table=<?= $table['id_table'] ?>&date=<?= urlencode($date) ?>&time=<?= urlencode($time) ?>" class="btn btn-small btn-success">Book</a></td>
+                        <td><?= (int)$table['capacity'] ?> people</td>
+                        <td><a href="<?= BASE_PATH ?>/reservations/create?id_table=<?= (int)$table['id_table'] ?>&date=<?= urlencode($date) ?>&time=<?= urlencode($time) ?>" class="btn btn-small btn-success">Book</a></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>

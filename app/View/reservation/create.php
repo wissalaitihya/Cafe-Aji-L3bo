@@ -4,7 +4,7 @@
     $pEndTime = $prefill['end_time']     ?? '';
     $pTable   = $prefill['id_table']     ?? '';
     $pPeople  = $prefill['people_count'] ?? '';
-    $pGame    = $_GET['id_game'] ?? '';
+    $pGame    = isset($_GET['id_game']) ? (int)$_GET['id_game'] : 0;
 ?>
 <?php require __DIR__ . '/../layout/header.php'; ?>
 
@@ -24,12 +24,13 @@
         <?= htmlspecialchars($r['reservation_time']) ?>&ndash;<?= htmlspecialchars($r['reservation_end_time'] ?? '') ?>
         &nbsp;
         <span class="badge badge-<?= $r['status_reservation'] === 'confirmed' ? 'success' : 'warning' ?>">
-            <?= ucfirst($r['status_reservation']) ?>
+            <?= htmlspecialchars(ucfirst($r['status_reservation'])) ?>
         </span>
         <br><br>
         <?php if ($r['status_reservation'] === 'pending'): ?>
-            <form action="<?= BASE_PATH ?>/reservations/<?= $r['id_reservation'] ?>/cancel" method="POST" style="display:inline"
+            <form action="<?= BASE_PATH ?>/reservations/<?= (int)$r['id_reservation'] ?>/cancel" method="POST" style="display:inline"
                   onsubmit="return confirm('Cancel your current reservation so you can book a new one?')">
+    <?= \Core\Csrf::field() ?>
                 <button type="submit" class="btn btn-danger btn-small">&#10005; Cancel my current reservation</button>
             </form>
             &nbsp;
@@ -43,6 +44,7 @@
 <?php endif; ?>
 
 <form action="<?= BASE_PATH ?>/reservations" method="POST" class="form-card">
+    <?= \Core\Csrf::field() ?>
     <div class="form-group">
         <label for="reservation_date">Date</label>
         <input type="date" id="reservation_date" name="reservation_date" value="<?= htmlspecialchars($pDate) ?>" min="<?= date('Y-m-d') ?>" required>
@@ -66,11 +68,11 @@
         <select id="id_game" name="id_game">
             <option value="0">-- No game --</option>
             <?php foreach ($games as $game): ?>
-                <option value="<?= $game['id_game'] ?>"
+                <option value="<?= (int)$game['id_game'] ?>"
                         data-min="<?= $game['players_min'] ?>"
                     data-max="<?= $game['players_max'] ?>"
                     <?= ((int)$pGame === (int)$game['id_game']) ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($game['name_game']) ?> (<?= $game['players_min'] ?>-<?= $game['players_max'] ?> players, <?= $game['duration'] ?> min)
+                    <?= htmlspecialchars($game['name_game']) ?> (<?= (int)$game['players_min'] ?>-<?= (int)$game['players_max'] ?> players, <?= (int)$game['duration'] ?> min)
                 </option>
             <?php endforeach; ?>
         </select>
@@ -97,10 +99,10 @@
         <select id="id_table" name="id_table" required>
             <option value="">-- Choose a table --</option>
             <?php foreach ($tables as $table): ?>
-                <option value="<?= $table['id_table'] ?>"
+                <option value="<?= (int)$table['id_table'] ?>"
                         data-capacity="<?= $table['capacity'] ?>"
                         <?= ((int)$pTable === (int)$table['id_table']) ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($table['name_table']) ?> (capacity: <?= $table['capacity'] ?>)
+                    <?= htmlspecialchars($table['name_table']) ?> (capacity: <?= (int)$table['capacity'] ?>)
                 </option>
             <?php endforeach; ?>
         </select>
@@ -293,11 +295,16 @@
         }
     });
 
-    gameSelect.addEventListener('change', function() { runValidation(); fetchAvailability(); });
+    gameSelect.addEventListener('change', function() { runValidation(); fetchAvailabilityDebounced(); });
     peopleInput.addEventListener('input', runValidation);
     tableSelect.addEventListener('change', runValidation);
 
-    // ── Fetch available tables when date/time/game changes ─
+    // ── Fetch available tables when date/time/game changes (debounced 250ms) ─
+    var availTimer = null;
+    function fetchAvailabilityDebounced() {
+        clearTimeout(availTimer);
+        availTimer = setTimeout(fetchAvailability, 250);
+    }
     function fetchAvailability() {
         var date    = dateInput.value;
         var time    = timeInput.value;
@@ -360,9 +367,9 @@
             });
     }
 
-    dateInput.addEventListener('change', fetchAvailability);
-    timeInput.addEventListener('change', fetchAvailability);
-    endTimeInput.addEventListener('change', fetchAvailability);
+    dateInput.addEventListener('change', fetchAvailabilityDebounced);
+    timeInput.addEventListener('change', fetchAvailabilityDebounced);
+    endTimeInput.addEventListener('change', fetchAvailabilityDebounced);
     // Note: gameSelect change already handled above (runValidation + fetchAvailability)
 
     // ── Game Recommendations ──────────────────────────

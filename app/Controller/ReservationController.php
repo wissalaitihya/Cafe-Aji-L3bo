@@ -5,6 +5,9 @@ namespace App\Controller;
 use App\Model\Reservation;
 use App\Model\Table;
 use App\Model\Game;
+use Core\Csrf;
+use Core\Sanitizer;
+use Core\Validator;
 
 class ReservationController
 {
@@ -56,18 +59,25 @@ class ReservationController
             }
         }
 
-        $date    = $_GET['date'] ?? '';
-        $time    = $_GET['time'] ?? '';
-        $endTime = $_GET['end_time'] ?? '';
-        $tableId = $_GET['id_table'] ?? '';
+        $date    = Sanitizer::str($_GET['date'] ?? '', 10);
+        $time    = Sanitizer::str($_GET['time'] ?? '', 8);
+        $endTime = Sanitizer::str($_GET['end_time'] ?? '', 8);
+        $tableId = Sanitizer::int($_GET['id_table'] ?? 0, 0);
 
         $tableModel = new Table();
         $gameModel  = new Game();
 
         if ($date && $time) {
-            $et     = $endTime ?: date('H:i', strtotime($time) + 7200);
-            $tables = $tableModel->getAvailableForSlot($date, $time, $et);
-            $games  = $gameModel->getAvailableForSlot($date, $time);
+            // Validate before hitting DB; fall back to full lists on bad input.
+            $slotError = Validator::slot($date, $time, $endTime ?: date('H:i', strtotime($time) + 7200));
+            if ($slotError === null) {
+                $et     = $endTime ?: date('H:i', strtotime($time) + 7200);
+                $tables = $tableModel->getAvailableForSlot($date, $time, $et);
+                $games  = $gameModel->getAvailableForSlot($date, $time);
+            } else {
+                $tables = $tableModel->getAll();
+                $games  = $gameModel->getAvailable();
+            }
         } else {
             $tables = $tableModel->getAll();
             $games  = $gameModel->getAvailable();
@@ -100,15 +110,26 @@ class ReservationController
     public function store()
     {
         $this->requireLogin();
+        if (($csrfError = Csrf::requireValid()) !== null) {
+            $tableModel = new Table();
+            $gameModel = new Game();
+            $this->render('reservation/create', [
+                'error'   => $csrfError,
+                'tables'  => $tableModel->getAll(),
+                'games'   => $gameModel->getAvailable(),
+                'prefill' => [],
+            ]);
+            return;
+        }
 
         $data = [
-            'id_user'               => $_SESSION['user_id'],
-            'id_table'              => (int)($_POST['id_table'] ?? 0),
-            'id_game'               => (int)($_POST['id_game'] ?? 0),
-            'people_count'          => (int)($_POST['people_count'] ?? 1),
-            'reservation_date'      => $_POST['reservation_date'] ?? '',
-            'reservation_time'      => $_POST['reservation_time'] ?? '',
-            'reservation_end_time'  => $_POST['reservation_end_time'] ?? '',
+            'id_user'               => (int)$_SESSION['user_id'],
+            'id_table'              => Sanitizer::int($_POST['id_table'] ?? 0, 0),
+            'id_game'               => Sanitizer::int($_POST['id_game'] ?? 0, 0),
+            'people_count'          => Sanitizer::int($_POST['people_count'] ?? 1, 1),
+            'reservation_date'      => Sanitizer::str($_POST['reservation_date'] ?? '', 10),
+            'reservation_time'      => Sanitizer::str($_POST['reservation_time'] ?? '', 8),
+            'reservation_end_time'  => Sanitizer::str($_POST['reservation_end_time'] ?? '', 8),
         ];
 
         $prefill = [
@@ -129,6 +150,24 @@ class ReservationController
                 'prefill' => $prefill,
             ]);
             return;
+        }
+
+        // Backend parity with frontend: table/date/time formats + past-date guard.
+        if (($e = Validator::intRange($data['id_table'], 1, 1000000, 'table')) !== null
+            || ($e = Validator::intRange($data['people_count'], 1, 30, 'people')) !== null
+            || ($e = Validator::slot($data['reservation_date'], $data['reservation_time'], $data['reservation_end_time'])) !== null) {
+            $tableModel = new Table();
+            $gameModel = new Game();
+            $this->render('reservation/create', [
+                'error'   => $e,
+                'tables'  => $tableModel->getAll(),
+                'games'   => $gameModel->getAvailable(),
+                'prefill' => $prefill,
+            ]);
+            return;
+        }
+        if ($data['id_game'] !== 0 && Validator::intRange($data['id_game'], 1, 1000000, 'game') !== null) {
+            $data['id_game'] = 0;
         }
 
         // Validate end time: must be after start, min 30 minutes
@@ -248,7 +287,7 @@ class ReservationController
         $this->requireLogin();
 
         $reservationModel = new Reservation();
-        $reservations = $reservationModel->getByUserId($_SESSION['user_id']);
+        $reservations = $reservationModel->getByUserId((int)$_SESSION['user_id']);
 
         $this->render('reservation/myreservations', ['reservations' => $reservations]);
     }
@@ -258,8 +297,14 @@ class ReservationController
     {
         $this->requireLogin();
 
-        $date = $_GET['date'] ?? date('Y-m-d');
-        $time = $_GET['time'] ?? '';
+        $date = Sanitizer::str($_GET['date'] ?? date('Y-m-d'), 10);
+        $time = Sanitizer::str($_GET['time'] ?? '', 8);
+        if (Validator::date($date, false) !== null) {
+            $date = date('Y-m-d');
+        }
+        if ($time !== '' && Validator::time($time) !== null) {
+            $time = '';
+        }
 
         $available = [];
         if (!empty($time)) {
@@ -279,10 +324,15 @@ class ReservationController
     public function updateStatus($id)
     {
         $this->requireAdmin();
+        if (($csrfError = Csrf::requireValid()) !== null) {
+            http_response_code(419);
+            echo $csrfError;
+            return;
+        }
 
-        $status = $_POST['status'] ?? '';
+        $status = Sanitizer::str($_POST['status'] ?? '', 12);
         $reservationModel = new Reservation();
-        $reservationModel->updateStatus($id, $status);
+        $reservationModel->updateStatus((int)$id, $status);
 
         // Re-sync table statuses after any status change
         (new Table())->syncStatuses();
@@ -294,6 +344,11 @@ class ReservationController
     public function cancelByPlayer($id)
     {
         $this->requireLogin();
+        if (($csrfError = Csrf::requireValid()) !== null) {
+            http_response_code(419);
+            echo $csrfError;
+            return;
+        }
 
         $reservationModel = new Reservation();
         $reservation = $reservationModel->getById((int)$id);
@@ -336,9 +391,15 @@ class ReservationController
 
         header('Content-Type: application/json');
 
-        $date    = $_GET['date'] ?? '';
-        $time    = $_GET['time'] ?? '';
-        $endTime = $_GET['end_time'] ?? '';
+        $date    = Sanitizer::str($_GET['date'] ?? '', 10);
+        $time    = Sanitizer::str($_GET['time'] ?? '', 8);
+        $endTime = Sanitizer::str($_GET['end_time'] ?? '', 8);
+
+        if (Validator::date($date, false) !== null || Validator::time($time) !== null
+            || ($endTime !== '' && Validator::time($endTime) !== null)) {
+            echo json_encode([]);
+            return;
+        }
 
         if (empty($date) || empty($time)) {
             echo json_encode([]);
@@ -349,7 +410,7 @@ class ReservationController
         $gameModel  = new Game();
 
         // If a game_id is provided filter tables by that game's min/max capacity
-        $gameId = (int)($_GET['game_id'] ?? 0);
+        $gameId = Sanitizer::int($_GET['game_id'] ?? 0, 0);
         $minCap = null;
         $maxCap = null;
         if ($gameId > 0) {
@@ -369,8 +430,13 @@ class ReservationController
 
         header('Content-Type: application/json');
 
-        $date = $_GET['date'] ?? '';
-        $time = $_GET['time'] ?? '';
+        $date = Sanitizer::str($_GET['date'] ?? '', 10);
+        $time = Sanitizer::str($_GET['time'] ?? '', 8);
+
+        if (Validator::date($date, false) !== null || Validator::time($time) !== null) {
+            echo json_encode([]);
+            return;
+        }
 
         if (empty($date) || empty($time)) {
             echo json_encode([]);

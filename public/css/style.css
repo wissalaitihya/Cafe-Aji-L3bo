@@ -3,8 +3,8 @@
    Electric Purple × Cyan · Clean Light Theme
    ============================================================ */
 
-/* === Google Fonts — Fraunces (display) + DM Sans (body) === */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap');
+/* === Google Fonts — loaded via <link> in layout/header.php (preconnect + display=swap) === */
+/* Kept as font-display fallback only; do not @import here (render-blocking). */
 
 /* === Reset === */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2730,7 +2730,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     align-items: center;
     background:
         linear-gradient(90deg, rgba(16, 55, 57, 0.94) 0%, rgba(20, 73, 72, 0.78) 44%, rgba(20, 73, 72, 0.18) 100%),
-        url('https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=1800&q=88') center / cover;
+        linear-gradient(135deg, #103739 0%, #144948 55%, #1d6b5f 100%);
     border: 0;
     box-shadow: 0 18px 42px rgba(46, 41, 37, 0.18);
 }

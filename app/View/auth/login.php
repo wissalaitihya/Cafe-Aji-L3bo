@@ -16,14 +16,15 @@
     <?php endif; ?>
 
     <form method="POST" action="<?= BASE_PATH ?>/login" class="form-card">
+    <?= \Core\Csrf::field() ?>
         <div class="form-group">
             <label class="form-label" for="email">Email</label>
-            <input type="email" id="email" name="email" class="form-input" placeholder="votre@email.com" required>
+            <input type="email" id="email" name="email" class="form-input" placeholder="votre@email.com" required maxlength="100" autocomplete="email">
         </div>
 
         <div class="form-group">
             <label class="form-label" for="password">Password</label>
-            <input type="password" id="password" name="password" class="form-input" placeholder="Your password" required>
+            <input type="password" id="password" name="password" class="form-input" placeholder="Your password" required maxlength="255" autocomplete="current-password">
         </div>
 
         <button type="submit" class="btn btn-primary">Log in</button>

@@ -1,0 +1,10 @@
+# Scoped guard for uploaded game images (this directory only).
+# .htaccess-safe: no DirectoryMatch here (illegal in .htaccess).
+RemoveHandler .php .phtml .phar
+RemoveType .php .phtml .phar
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<FilesMatch "\.(php|phtml|phar|inc)$">
+    Require all denied
+</FilesMatch>

@@ -5,6 +5,9 @@ namespace App\Controller;
 use App\Model\Game;
 use App\Model\Rating;
 use App\Model\Table;
+use Core\Csrf;
+use Core\Sanitizer;
+use Core\Validator;
 
 class GameController
 {
@@ -14,16 +17,31 @@ class GameController
         $ratingModel = new Rating();
         $tableModel  = new Table();
 
+        // Sanitize + whitelist every filter (OWASP: sanitize search/URLs).
+        $rawQ = Validator::searchQuery($_GET['q'] ?? '');
+        $rawCategory = Sanitizer::str($_GET['category'] ?? '', 30);
+        $rawDifficulty = Sanitizer::str($_GET['difficulty'] ?? '', 10);
+        $rawStatus = Sanitizer::str($_GET['status'] ?? '', 12);
+        $rawPlayers = $_GET['players'] ?? '';
+        $page = max(1, Sanitizer::int($_GET['page'] ?? 1, 1));
+        $perPage = 48;
+
         $filters = [
-            'q'          => trim($_GET['q'] ?? ''),
-            'category'   => $_GET['category'] ?? '',
-            'difficulty' => $_GET['difficulty'] ?? '',
-            'players'    => (int)($_GET['players'] ?? 0) ?: '',
-            'status'     => $_GET['status'] ?? '',
+            'q'          => mb_substr($rawQ, 0, 100),
+            'category'   => in_array($rawCategory, Validator::CATEGORIES, true) ? $rawCategory : '',
+            'difficulty' => in_array($rawDifficulty, Validator::DIFFICULTIES, true) ? $rawDifficulty : '',
+            'players'    => '',
+            'status'     => in_array($rawStatus, Validator::GAME_STATUS, true) ? $rawStatus : '',
         ];
+        if ($rawPlayers !== '' && Validator::intRange($rawPlayers, 1, 30) === null) {
+            $filters['players'] = (int) $rawPlayers;
+        }
 
         $hasFilter = array_filter($filters, function($v) { return $v !== '' && $v !== 0; });
-        $games = $hasFilter ? $gameModel->search($filters) : $gameModel->getAll();
+        $offset = ($page - 1) * $perPage;
+        $games = $hasFilter ? $gameModel->search($filters, $perPage, $offset) : $gameModel->getAll($perPage, $offset);
+        $totalGames = $hasFilter ? $gameModel->countAll($filters) : $gameModel->countAll();
+        $totalPages = max(1, (int) ceil($totalGames / $perPage));
 
         $ratingMap          = $ratingModel->getAllRatingsMap();
         $playerActiveGameId = null;
@@ -31,20 +49,30 @@ class GameController
             $playerActiveGameId = $gameModel->getActiveGameIdForUser((int)$_SESSION['user_id']);
         }
 
+        // Cheap counts for hero (no full-table fetch).
+        $stats = $gameModel->getStats();
+
         $this->render('games/index', [
             'games'              => $games,
-            'filters'            => $filters,
+            'filters'            => $filters + ['page' => $page],
             'ratingMap'          => $ratingMap,
             'playerActiveGameId' => $playerActiveGameId,
             'heroStats'          => [
-                'games'  => count($games),
-                'tables' => count($tableModel->getAll()),
+                'games'  => $stats['available'] ?? count($games),
+                'tables' => $tableModel->getStats()['total'] ?? 0,
             ],
+            'pagination' => ['page' => $page, 'totalPages' => $totalPages, 'total' => $totalGames],
         ]);
     }
 
     public function show($id)
     {
+        $id = (int) $id;
+        if ($id < 1) {
+            http_response_code(404);
+            $this->render('error/404');
+            return;
+        }
         $gameModel  = new Game();
         $ratingModel = new Rating();
         $game = $gameModel->getById($id);
@@ -90,18 +118,28 @@ class GameController
     public function store()
     {
         $this->requireAdmin();
+        if (($csrfError = Csrf::requireValid()) !== null) {
+            $this->render('games/create', ['error' => $csrfError, 'data' => $_POST]);
+            return;
+        }
 
         $data = [
-            'name_game'        => trim($_POST['name_game'] ?? ''),
-            'players_min'      => (int)($_POST['players_min'] ?? 2),
-            'players_max'      => (int)($_POST['players_max'] ?? 4),
-            'duration'         => (int)($_POST['duration'] ?? 30),
-            'difficulty'       => $_POST['difficulty'] ?? 'medium',
-            'description_game' => trim($_POST['description_game'] ?? ''),
-            'how_to_play'      => trim($_POST['how_to_play'] ?? ''),
-            'category_game'    => $_POST['category_game'] ?? 'other',
+            'name_game'        => Sanitizer::str($_POST['name_game'] ?? '', 50),
+            'players_min'      => Sanitizer::int($_POST['players_min'] ?? 2, 2),
+            'players_max'      => Sanitizer::int($_POST['players_max'] ?? 4, 4),
+            'duration'         => Sanitizer::int($_POST['duration'] ?? 30, 30),
+            'difficulty'       => Sanitizer::str($_POST['difficulty'] ?? 'medium', 10),
+            'description_game' => Sanitizer::str($_POST['description_game'] ?? '', 5000),
+            'how_to_play'      => Sanitizer::str($_POST['how_to_play'] ?? '', 8000),
+            'category_game'    => Sanitizer::str($_POST['category_game'] ?? 'other', 30),
             'image_game'       => null,
         ];
+
+        $error = $this->validateGameData($data);
+        if ($error !== null) {
+            $this->render('games/create', ['error' => $error, 'data' => $data]);
+            return;
+        }
 
         if (empty($data['name_game'])) {
             $this->render('games/create', ['error' => 'Game name is required', 'data' => $data]);
@@ -145,17 +183,32 @@ class GameController
     public function update($id)
     {
         $this->requireAdmin();
+        $id = (int) $id;
+        if (($csrfError = Csrf::requireValid()) !== null) {
+            $gameModel = new Game();
+            $game = $gameModel->getById($id);
+            $this->render('games/edit', ['error' => $csrfError, 'game' => $game]);
+            return;
+        }
 
         $data = [
-            'name_game'        => trim($_POST['name_game'] ?? ''),
-            'players_min'      => (int)($_POST['players_min'] ?? 2),
-            'players_max'      => (int)($_POST['players_max'] ?? 4),
-            'duration'         => (int)($_POST['duration'] ?? 30),
-            'difficulty'       => $_POST['difficulty'] ?? 'medium',
-            'description_game' => trim($_POST['description_game'] ?? ''),
-            'how_to_play'      => trim($_POST['how_to_play'] ?? ''),
-            'category_game'    => $_POST['category_game'] ?? 'other',
+            'name_game'        => Sanitizer::str($_POST['name_game'] ?? '', 50),
+            'players_min'      => Sanitizer::int($_POST['players_min'] ?? 2, 2),
+            'players_max'      => Sanitizer::int($_POST['players_max'] ?? 4, 4),
+            'duration'         => Sanitizer::int($_POST['duration'] ?? 30, 30),
+            'difficulty'       => Sanitizer::str($_POST['difficulty'] ?? 'medium', 10),
+            'description_game' => Sanitizer::str($_POST['description_game'] ?? '', 5000),
+            'how_to_play'      => Sanitizer::str($_POST['how_to_play'] ?? '', 8000),
+            'category_game'    => Sanitizer::str($_POST['category_game'] ?? 'other', 30),
         ];
+
+        $error = $this->validateGameData($data);
+        if ($error !== null) {
+            $gameModel = new Game();
+            $game = $gameModel->getById($id);
+            $this->render('games/edit', ['error' => $error, 'game' => $game]);
+            return;
+        }
 
         if (empty($data['name_game'])) {
             $gameModel = new Game();
@@ -189,10 +242,41 @@ class GameController
     public function destroy($id)
     {
         $this->requireAdmin();
+        if (($csrfError = Csrf::requireValid()) !== null) {
+            http_response_code(419);
+            echo $csrfError;
+            return;
+        }
 
         $gameModel = new Game();
-        $gameModel->delete($id);
+        $gameModel->delete((int)$id);
         $this->redirect('/games');
+    }
+
+    private function validateGameData(array $data): ?string
+    {
+        if (($e = Validator::name($data['name_game'], 50)) !== null) {
+            return $e;
+        }
+        if (($e = Validator::intRange($data['players_min'], 1, 30, 'players_min')) !== null) {
+            return $e;
+        }
+        if (($e = Validator::intRange($data['players_max'], 1, 30, 'players_max')) !== null) {
+            return $e;
+        }
+        if ($data['players_min'] > $data['players_max']) {
+            return 'players_min cannot exceed players_max.';
+        }
+        if (($e = Validator::intRange($data['duration'], 5, 480, 'duration')) !== null) {
+            return $e;
+        }
+        if (($e = Validator::enum($data['difficulty'], Validator::DIFFICULTIES, 'difficulty')) !== null) {
+            return $e;
+        }
+        if (($e = Validator::enum($data['category_game'], Validator::CATEGORIES, 'category')) !== null) {
+            return $e;
+        }
+        return null;
     }
 
     // ========================
@@ -205,6 +289,7 @@ class GameController
         }
 
         $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         $finfo = new \finfo(FILEINFO_MIME_TYPE);
         $mime  = $finfo->file($file['tmp_name']);
 
@@ -216,8 +301,16 @@ class GameController
             return false;
         }
 
-        $ext       = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $safeName  = bin2hex(random_bytes(8)) . '.' . strtolower($ext);
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, $allowedExts, true)) {
+            return false;
+        }
+        // Normalize jpeg extension
+        if ($ext === 'jpeg') {
+            $ext = 'jpg';
+        }
+
+        $safeName  = bin2hex(random_bytes(8)) . '.' . $ext;
         $uploadDir = __DIR__ . '/../../public/images/games/';
 
         if (!is_dir($uploadDir)) {
@@ -280,19 +373,23 @@ class GameController
     public function apiRecommend()
     {
         header('Content-Type: application/json');
-        $players = (int)($_GET['players'] ?? 0);
-        if ($players < 1) { echo json_encode([]); return; }
+        $players = Sanitizer::int($_GET['players'] ?? 0, 0);
+        if ($players < 1 || $players > 30) { echo json_encode([]); return; }
 
         $gameModel   = new Game();
         $ratingModel = new Rating();
 
-        $games = $gameModel->search(['players' => $players, 'status' => 'available']);
+        $games = $gameModel->search(['players' => $players, 'status' => 'available'], 12);
 
-        // Attach avg rating & sort: highest rated first, then alphabetically
+        // One batched ratings query (no N+1), then sort in PHP.
+        $ids = array_map(fn($g) => (int) $g['id_game'], $games);
+        $summaries = $ratingModel->getSummariesForGames($ids);
         foreach ($games as &$g) {
-            $summary = $ratingModel->getSummary((int)$g['id_game']);
-            $g['avg_stars']    = $summary['avg'];
-            $g['total_ratings'] = $summary['total'];
+            $s = $summaries[(int) $g['id_game']] ?? ['avg' => 0.0, 'total' => 0];
+            $g['avg_stars']    = $s['avg'];
+            $g['total_ratings'] = $s['total'];
+            // Never leak TEXT blobs over the API
+            unset($g['description_game'], $g['how_to_play']);
         }
         unset($g);
 
@@ -302,5 +399,26 @@ class GameController
         });
 
         echo json_encode(array_values(array_slice($games, 0, 6)));
+    }
+
+    /** GET /api/games/search?q=… — lightweight autocomplete (id + name only). */
+    public function apiSearch()
+    {
+        header('Content-Type: application/json');
+        $q = Validator::searchQuery($_GET['q'] ?? '');
+        if (mb_strlen($q) < 2) {
+            echo json_encode([]);
+            return;
+        }
+        $rows = (new Game())->searchNames($q, 6);
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'id' => (int) $r['id_game'],
+                'name' => $r['name_game'],
+                'href' => BASE_PATH . '/games/' . (int) $r['id_game'],
+            ];
+        }
+        echo json_encode($out);
     }
 }

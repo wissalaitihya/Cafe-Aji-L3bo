@@ -30,7 +30,7 @@
                 <circle class="timer-ring-progress" cx="60" cy="60" r="52"
                         data-start="<?= htmlspecialchars($s['start_time']) ?>"
                         data-end="<?= htmlspecialchars($endDatetime) ?>"
-                        data-duration="<?= $durationMins ?>"/>
+                        data-duration="<?= (int)$durationMins ?>"/>
             </svg>
             <div class="timer-ring-label">
                 <div class="timer-time" data-start="<?= htmlspecialchars($s['start_time']) ?>"
@@ -48,21 +48,22 @@
             </div>
             <div class="session-card-meta">
                 <span>&#128100; <?= htmlspecialchars($s['name_user'] ?? '-') ?></span>
-                <span>&#9200; Started <?= substr($s['start_time'], 11, 5) ?></span>
+                <span>&#9200; Started <?= htmlspecialchars(substr($s['start_time'], 11, 5)) ?></span>
                 <?php if ($endDatetime): ?>
-                    <span>&#128679; Ends <?= substr($s['reservation_end_time'], 0, 5) ?></span>
+                    <span>&#128679; Ends <?= htmlspecialchars(substr($s['reservation_end_time'], 0, 5)) ?></span>
                 <?php endif; ?>
             </div>
 
             <!-- Pulsing overtime warning (shown by JS when time is up) -->
-            <div class="overtime-alert" style="display:none" data-session="<?= $s['id_session'] ?>">
+            <div class="overtime-alert" style="display:none" data-session="<?= (int)$s['id_session'] ?>">
                 &#9888; Time&apos;s up &mdash; please end this session!
             </div>
 
-            <form action="<?= BASE_PATH ?>/sessions/<?= $s['id_session'] ?>/end" method="POST"
+            <form action="<?= BASE_PATH ?>/sessions/<?= (int)$s['id_session'] ?>/end" method="POST"
                   onsubmit="return confirm('End session for <?= htmlspecialchars(addslashes($s['name_table'] ?? 'this table')) ?>?')">
+    <?= \Core\Csrf::field() ?>
                 <button type="submit" class="btn btn-danger btn-small end-btn"
-                        data-session="<?= $s['id_session'] ?>">&#9632; End Session</button>
+                        data-session="<?= (int)$s['id_session'] ?>">&#9632; End Session</button>
             </form>
         </div>
     </div>
@@ -157,14 +158,15 @@
     updateAll();
     setInterval(updateAll, 1000);
 
-    // Auto-reload 5s after first session expires (triggers server-side autoEndOverdue)
+    // Auto-reload after first session expires (triggers server-side autoEndOverdue).
+    // Checked every 30s (not 10s) to avoid constant full-page reloads.
     setInterval(function() {
         var expired = false;
         document.querySelectorAll('.timer-ring-progress').forEach(function(c) {
             if (c.dataset.end && Date.now() >= new Date(c.dataset.end).getTime() + 5000) expired = true;
         });
         if (expired) location.reload();
-    }, 10000);
+    }, 30000);
 }());
 </script>
 

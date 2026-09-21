@@ -66,17 +66,17 @@ CREATE TABLE sessions (
 );
 
 -- =====================
--- SEED DATA
+-- SEED DATA (dev only — change passwords immediately after import)
 -- =====================
 
--- Admin (password: admin123)
+-- Admin (dev seed)
 INSERT INTO users (name_user, email, pass_word, phone_number, role_user) VALUES
-('Admin', 'admin@ajil3bo.ma', '$2y$10$7Q5Z5Q5Z5Q5Z5Q5Z5Q5Z5ePxKjKjKjKjKjKjKjKjKjKjKjKjKjKjK', '0600000000', 'admin');
+('Admin', 'admin@ajil3bo.ma', '$2y$12$.4Tli7s7vWT27MLW2WRwd.jl2bJrnzCUQLzn.xw5BMn9ZShnZPDFq', '0600000000', 'admin');
 
--- Players (password: player123)
+-- Players (dev seed)
 INSERT INTO users (name_user, email, pass_word, phone_number, role_user) VALUES
-('Youssef', 'youssef@mail.com', '$2y$10$7Q5Z5Q5Z5Q5Z5Q5Z5Q5Z5ePxKjKjKjKjKjKjKjKjKjKjKjKjKjKjK', '0611111111', 'player'),
-('Sara', 'sara@mail.com', '$2y$10$7Q5Z5Q5Z5Q5Z5Q5Z5Q5Z5ePxKjKjKjKjKjKjKjKjKjKjKjKjKjKjK', '0622222222', 'player');
+('Youssef', 'youssef@mail.com', '$2y$12$N1bVWdHU9I4JzL3S7V03quTQC8DQ00PxgeToIlimei2dudAioMbwq', '0611111111', 'player'),
+('Sara', 'sara@mail.com', '$2y$12$N1bVWdHU9I4JzL3S7V03quTQC8DQ00PxgeToIlimei2dudAioMbwq', '0622222222', 'player');
 
 -- Tables
 INSERT INTO tables (name_table, capacity, status_table) VALUES
@@ -156,3 +156,116 @@ CREATE TABLE IF NOT EXISTS game_ratings (
     FOREIGN KEY (id_user)    REFERENCES users    (id_user)    ON DELETE CASCADE,
     FOREIGN KEY (id_session) REFERENCES sessions (id_session) ON DELETE SET NULL
 );
+
+-- =====================
+-- V6 MIGRATION: hot-path indexes (perf)
+-- MySQL has no CREATE INDEX IF NOT EXISTS — guard via information_schema.
+-- =====================
+SET @has_idx = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'games' AND INDEX_NAME = 'idx_games_category');
+SET @sql = IF(@has_idx = 0, 'CREATE INDEX idx_games_category ON games (category_game)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @has_idx = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'games' AND INDEX_NAME = 'idx_games_status');
+SET @sql = IF(@has_idx = 0, 'CREATE INDEX idx_games_status ON games (status_game)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @has_idx = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'games' AND INDEX_NAME = 'idx_games_name');
+SET @sql = IF(@has_idx = 0, 'CREATE INDEX idx_games_name ON games (name_game)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @has_idx = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reservations' AND INDEX_NAME = 'idx_res_date_time');
+SET @sql = IF(@has_idx = 0, 'CREATE INDEX idx_res_date_time ON reservations (reservation_date, reservation_time)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @has_idx = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reservations' AND INDEX_NAME = 'idx_res_status_date');
+SET @sql = IF(@has_idx = 0, 'CREATE INDEX idx_res_status_date ON reservations (status_reservation, reservation_date)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @has_idx = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reservations' AND INDEX_NAME = 'idx_res_user');
+SET @sql = IF(@has_idx = 0, 'CREATE INDEX idx_res_user ON reservations (id_user)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @has_idx = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reservations' AND INDEX_NAME = 'idx_res_table_date');
+SET @sql = IF(@has_idx = 0, 'CREATE INDEX idx_res_table_date ON reservations (id_table, reservation_date)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @has_idx = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sessions' AND INDEX_NAME = 'idx_sessions_status');
+SET @sql = IF(@has_idx = 0, 'CREATE INDEX idx_sessions_status ON sessions (status_session)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @has_idx = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sessions' AND INDEX_NAME = 'idx_sessions_table');
+SET @sql = IF(@has_idx = 0, 'CREATE INDEX idx_sessions_table ON sessions (id_table)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @has_idx = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sessions' AND INDEX_NAME = 'idx_sessions_game');
+SET @sql = IF(@has_idx = 0, 'CREATE INDEX idx_sessions_game ON sessions (id_game)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @has_idx = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sessions' AND INDEX_NAME = 'idx_sessions_reservation');
+SET @sql = IF(@has_idx = 0, 'CREATE INDEX idx_sessions_reservation ON sessions (id_reservation)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @has_idx = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'game_ratings' AND INDEX_NAME = 'idx_ratings_game');
+SET @sql = IF(@has_idx = 0, 'CREATE INDEX idx_ratings_game ON game_ratings (id_game)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- =====================
+-- V7 MIGRATION: local game covers in public/images/games/
+-- Upload these files (exact names, case-sensitive):
+--   public/images/games/Mafia-Game.png
+--   public/images/games/Codenames-Game.png
+--   public/images/games/Catan-Game.png
+-- =====================
+UPDATE games SET image_game = 'images/games/Mafia-Game.png' WHERE name_game = 'Mafia';
+UPDATE games SET image_game = 'images/games/Codenames-Game.png' WHERE name_game = 'Codenames';
+UPDATE games SET image_game = 'images/games/Catan-Game.png' WHERE name_game = 'Catan';
+-- =====================
+-- V8 MIGRATION: demo reservations + sessions (relative dates, idempotent)
+-- Youssef (id 2): upcoming confirmed + pending, past confirmed + cancelled.
+-- Sara (id 3): history only (no active) so Book a Table stays open.
+-- Relative dates stay fresh on every fresh import.
+-- =====================
+INSERT INTO reservations (id_user, id_table, id_game, people_count, reservation_date, reservation_time, reservation_end_time, status_reservation)
+SELECT * FROM (
+  SELECT 2 AS u, 2 AS t, 3 AS g, 4 AS p, DATE_ADD(CURDATE(), INTERVAL 3 DAY) AS d, '18:00:00' AS s, '20:00:00' AS e, 'confirmed' AS st
+  UNION ALL SELECT 2, 1, 2, 4, DATE_ADD(CURDATE(), INTERVAL 6 DAY), '19:00:00', '21:00:00', 'pending'
+  UNION ALL SELECT 2, 3, 1, 6, DATE_SUB(CURDATE(), INTERVAL 6 DAY), '18:00:00', '20:00:00', 'confirmed'
+  UNION ALL SELECT 2, 4, 4, 2, DATE_SUB(CURDATE(), INTERVAL 12 DAY), '17:00:00', '19:00:00', 'cancelled'
+  UNION ALL SELECT 3, 2, 7, 4, DATE_SUB(CURDATE(), INTERVAL 4 DAY), '19:00:00', '21:00:00', 'confirmed'
+  UNION ALL SELECT 3, 4, 13, 2, DATE_SUB(CURDATE(), INTERVAL 9 DAY), '18:00:00', '20:00:00', 'pending'
+  UNION ALL SELECT 3, 1, 4, 3, DATE_SUB(CURDATE(), INTERVAL 15 DAY), '20:00:00', '22:00:00', 'cancelled'
+  UNION ALL SELECT 3, 3, 2, 4, CURDATE(), '10:00:00', '12:00:00', 'confirmed'
+) seed
+WHERE NOT EXISTS (
+  SELECT 1 FROM reservations r
+  WHERE r.id_user = 2 AND r.status_reservation = 'confirmed'
+    AND r.reservation_date = DATE_ADD(CURDATE(), INTERVAL 3 DAY)
+);
+
+INSERT INTO sessions (id_reservation, id_game, id_table, start_time, end_time, status_session)
+SELECT r.id_reservation, 1, 3,
+       CONCAT(r.reservation_date, ' 18:05:00'),
+       CONCAT(r.reservation_date, ' 19:55:00'), 'finished'
+FROM reservations r
+WHERE r.id_user = 2 AND r.status_reservation = 'confirmed'
+  AND r.reservation_date = DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+  AND NOT EXISTS (SELECT 1 FROM sessions s WHERE s.id_reservation = r.id_reservation)
+LIMIT 1;
+
+INSERT INTO sessions (id_reservation, id_game, id_table, start_time, end_time, status_session)
+SELECT r.id_reservation, 7, 2,
+       CONCAT(r.reservation_date, ' 19:05:00'),
+       CONCAT(r.reservation_date, ' 20:50:00'), 'finished'
+FROM reservations r
+WHERE r.id_user = 3 AND r.status_reservation = 'confirmed'
+  AND r.reservation_date = DATE_SUB(CURDATE(), INTERVAL 4 DAY)
+  AND NOT EXISTS (SELECT 1 FROM sessions s WHERE s.id_reservation = r.id_reservation)
+LIMIT 1;
+
+INSERT INTO sessions (id_reservation, id_game, id_table, start_time, end_time, status_session)
+SELECT NULL, 4, 3, NOW(), NULL, 'active'
+FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM sessions s WHERE s.status_session = 'active');
+
+UPDATE games SET status_game = 'in_use' WHERE id_game IN (1, 4, 7);
+UPDATE tables SET status_table = 'occupied' WHERE id_table = 3;

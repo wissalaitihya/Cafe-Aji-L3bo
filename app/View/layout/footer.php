@@ -114,19 +114,13 @@
                 return;
             }
             timer = window.setTimeout(function() {
-                var url = new URL(form.action, window.location.href);
-                url.searchParams.set('q', query);
+                var base = '<?= BASE_PATH ?>/api/games/search';
+                var url = base + '?q=' + encodeURIComponent(query);
                 request = new AbortController();
-                fetch(url.toString(), { signal: request.signal })
-                    .then(function(response) { return response.text(); })
-                    .then(function(html) {
-                        var page = new DOMParser().parseFromString(html, 'text/html');
-                        var games = Array.from(page.querySelectorAll('.game-card')).map(function(card) {
-                            var link = card.querySelector('.game-image-link') || card.querySelector('a[href*="/games/"]');
-                            var title = card.querySelector('h3');
-                            return link && title ? { href: link.getAttribute('href'), name: title.textContent.trim() } : null;
-                        }).filter(Boolean);
-                        showResults(games);
+                fetch(url, { signal: request.signal, headers: { 'Accept': 'application/json' } })
+                    .then(function(response) { return response.json(); })
+                    .then(function(games) {
+                        showResults(games.slice(0, 6));
                     })
                     .catch(function(error) {
                         if (error.name !== 'AbortError') clearResults();

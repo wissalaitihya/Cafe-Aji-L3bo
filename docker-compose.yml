@@ -8,20 +8,27 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     environment:
       - DB_HOST=db
       - DB_PORT=3306
-      - DB_NAME=aji_l3bo_cafe
-      - DB_USER=root
-      - DB_PASS=root
+      - DB_NAME=${DB_NAME:-aji_l3bo_cafe}
+      - DB_USER=${DB_USER:-cafe_app}
+      - DB_PASS=${DB_PASS:-change-me-strong-password}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - APP_ENV=${APP_ENV:-production}
 
   db:
     image: mysql:8.0
     ports:
       - "3307:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: aji_l3bo_cafe
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me-root-password}
+      MYSQL_DATABASE: ${DB_NAME:-aji_l3bo_cafe}
+      MYSQL_USER: ${DB_USER:-cafe_app}
+      MYSQL_PASSWORD: ${DB_PASS:-change-me-strong-password}
     volumes:
       - db_data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
@@ -31,5 +38,12 @@ services:
       timeout: 3s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+
 volumes:
   db_data:
+  redis_data:

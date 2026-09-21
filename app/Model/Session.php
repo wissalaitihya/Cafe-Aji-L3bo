@@ -101,8 +101,10 @@ private PDO $pdo;
         }
     }
 
-    public function getHistory(){
+    public function getHistory(int $limit = 100, int $offset = 0){
         try {
+            $limit = max(1, min($limit, 200));
+            $offset = max(0, $offset);
             $sql = "SELECT s.*, g.name_game, t.name_table, u.name_user,
                     TIMESTAMPDIFF(MINUTE, s.start_time, s.end_time) AS duration_minutes
                     FROM sessions s
@@ -111,8 +113,11 @@ private PDO $pdo;
                     LEFT JOIN reservations r ON s.id_reservation = r.id_reservation
                     LEFT JOIN users u ON r.id_user = u.id_user
                     WHERE s.status_session = 'finished'
-                    ORDER BY s.end_time DESC";
-            $stmt = $this->pdo->query($sql);
+                    ORDER BY s.end_time DESC LIMIT :lim OFFSET :off";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':lim', $limit, \PDO::PARAM_INT);
+            $stmt->bindValue(':off', $offset, \PDO::PARAM_INT);
+            $stmt->execute();
             return $stmt->fetchAll();
         } catch (\PDOException $e) {
             return [];

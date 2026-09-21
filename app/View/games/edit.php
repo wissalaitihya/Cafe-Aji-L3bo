@@ -9,27 +9,28 @@
     <p class="alert alert-error"><?= htmlspecialchars($error) ?></p>
 <?php endif; ?>
 
-<form action="<?= BASE_PATH ?>/games/<?= $game['id_game'] ?>/update" method="POST" class="form-card" enctype="multipart/form-data">
+<form action="<?= BASE_PATH ?>/games/<?= (int)$game['id_game'] ?>/update" method="POST" class="form-card" enctype="multipart/form-data">
+    <?= \Core\Csrf::field() ?>
     <div class="form-group">
         <label for="name_game">Game Name</label>
-        <input type="text" id="name_game" name="name_game" value="<?= htmlspecialchars($game['name_game']) ?>" required>
+        <input type="text" id="name_game" name="name_game" maxlength="50" minlength="2" value="<?= htmlspecialchars($game['name_game']) ?>" required>
     </div>
 
     <div class="form-row">
         <div class="form-group">
             <label for="players_min">Min Players</label>
-            <input type="number" id="players_min" name="players_min" value="<?= $game['players_min'] ?>" min="1" required>
+            <input type="number" id="players_min" name="players_min" max="30" value="<?= (int)$game['players_min'] ?>" min="1" required>
         </div>
         <div class="form-group">
             <label for="players_max">Max Players</label>
-            <input type="number" id="players_max" name="players_max" value="<?= $game['players_max'] ?>" min="1" required>
+            <input type="number" id="players_max" name="players_max" max="30" value="<?= (int)$game['players_max'] ?>" min="1" required>
         </div>
     </div>
 
     <div class="form-row">
         <div class="form-group">
             <label for="duration">Duration (min)</label>
-            <input type="number" id="duration" name="duration" value="<?= $game['duration'] ?>" min="5" required>
+            <input type="number" id="duration" name="duration" max="480" value="<?= (int)$game['duration'] ?>" min="5" required>
         </div>
         <div class="form-group">
             <label for="difficulty">Difficulty</label>
@@ -55,12 +56,12 @@
 
     <div class="form-group">
         <label for="description_game">Description</label>
-        <textarea id="description_game" name="description_game" rows="4"><?= htmlspecialchars($game['description_game'] ?? '') ?></textarea>
+        <textarea id="description_game" name="description_game" rows="4" maxlength="5000"><?= htmlspecialchars($game['description_game'] ?? '') ?></textarea>
     </div>
 
     <div class="form-group">
         <label for="how_to_play">How to Play <span class="muted">(optional)</span></label>
-        <textarea id="how_to_play" name="how_to_play" rows="5" placeholder="Step-by-step instructions for players..."><?= htmlspecialchars($game['how_to_play'] ?? '') ?></textarea>
+        <textarea id="how_to_play" name="how_to_play" rows="5" maxlength="8000" placeholder="Step-by-step instructions for players..."><?= htmlspecialchars($game['how_to_play'] ?? '') ?></textarea>
     </div>
 
     <div class="form-group">
@@ -82,7 +83,7 @@
 
     <div class="form-actions">
         <button type="submit" class="btn btn-success">&#10003; Save Changes</button>
-        <a href="<?= BASE_PATH ?>/games/<?= $game['id_game'] ?>" class="btn btn-secondary">Cancel</a>
+        <a href="<?= BASE_PATH ?>/games/<?= (int)$game['id_game'] ?>" class="btn btn-secondary">Cancel</a>
     </div>
 </form>
 

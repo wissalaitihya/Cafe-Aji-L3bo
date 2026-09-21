@@ -1,16 +1,13 @@
 # 🔹 Composer dependencies
 /vendor/
 
-# 🔹 Application code (private)
-/app/
-/public/
-
-# 🔹 Database credentials
-/config/database.php
+# 🔹 Environment — never commit real secrets
+.env
+.env.local
 
 # 🔹 Logs
 /logs/
-/*.log
+*.log
 
 # 🔹 Cache (if you add caching later)
 /cache/
