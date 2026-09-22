@@ -2413,7 +2413,7 @@ tr.res-row-cancelled td { opacity: 0.55; }
 .res-sum-num  { font-size: 1.4rem; font-weight: 700; line-height: 1; }
 .res-sum-lbl  { font-size: 0.65rem; text-transform: uppercase; letter-spacing: .05em; margin-top: 0.15rem; }
 .res-sum-all       { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.3); color: #818cf8; }
-.res-sum-pending   { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); color: #fbbf24; }
+.res-sum-pending   { background: rgba(169,117,61,0.1); border-color: rgba(169,117,61,0.3); color: #8b5d2d; }
 .res-sum-confirmed { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: #34d399; }
 .res-sum-cancelled { background: rgba(239,68,68,0.1);  border-color: rgba(239,68,68,0.3);  color: #f87171; }
 

@@ -39,6 +39,12 @@
         <p>No reservations yet. Players will appear here once they book a table.</p>
     </div>
 <?php else: ?>
+<?php if (!empty($_GET['error']) && $_GET['error'] === 'edit_session'): ?>
+    <div class="alert alert-error">&#10007; Cannot modify &mdash; a live session is running on this reservation. End it first.</div>
+<?php endif; ?>
+<?php if (!empty($_GET['error']) && $_GET['error'] === 'edit_closed'): ?>
+    <div class="alert alert-error">&#10007; Cannot modify &mdash; this reservation is finished or cancelled.</div>
+<?php endif; ?>
     <div class="res-index-table-wrap">
         <table class="data-table res-index-table">
             <thead>
@@ -60,6 +66,7 @@
                     $endTime      = isset($r['reservation_end_time']) ? substr($r['reservation_end_time'], 0, 5) : '?';
                     $startTime    = substr($r['reservation_time'], 0, 5);
                     $activeSession = $sessionsByReservation[(int)$r['id_reservation']] ?? null;
+                    $isPast        = ($r['reservation_date'] ?? '') < date('Y-m-d');
                 ?>
                     <tr class="res-row-<?= htmlspecialchars($status) ?>">
                         <td>
@@ -102,6 +109,9 @@
                             <?php endif; ?>
                         </td>
                         <td>
+                            <?php if (in_array($status, ['pending', 'confirmed'], true) && !$isPast && !$activeSession): ?>
+                                <a href="<?= BASE_PATH ?>/reservations/<?= (int)$r['id_reservation'] ?>/edit" class="btn btn-small btn-warning" title="Modify">&#9998;</a>
+                            <?php endif; ?>
                             <?php if ($status === 'pending'): ?>
                                 <div class="res-action-group">
                                     <form action="<?= BASE_PATH ?>/reservations/<?= (int)$r['id_reservation'] ?>/status" method="POST" style="display:inline">

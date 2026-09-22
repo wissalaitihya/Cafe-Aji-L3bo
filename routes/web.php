@@ -32,6 +32,8 @@ $router->get('/reservations/availability', 'ReservationController@availability')
 $router->get('/reservations/create', 'ReservationController@create');
 $router->post('/reservations', 'ReservationController@store');
 $router->get('/reservations/my', 'ReservationController@myReservations');
+$router->get('/reservations/{id}/edit', 'ReservationController@edit');
+$router->post('/reservations/{id}/update', 'ReservationController@update');
 $router->post('/reservations/{id}/status', 'ReservationController@updateStatus');
 $router->post('/reservations/{id}/cancel', 'ReservationController@cancelByPlayer');
 

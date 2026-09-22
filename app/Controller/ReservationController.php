@@ -289,7 +289,252 @@ class ReservationController
         $reservationModel = new Reservation();
         $reservations = $reservationModel->getByUserId((int)$_SESSION['user_id']);
 
-        $this->render('reservation/myreservations', ['reservations' => $reservations]);
+        // Map active sessions so the view can hide Edit on live bookings
+        // (same pattern as the admin list).
+        $sessionsByReservation = [];
+        foreach ((new \App\Model\Session())->getActive() as $s) {
+            if (!empty($s['id_reservation'])) {
+                $sessionsByReservation[(int)$s['id_reservation']] = $s;
+            }
+        }
+
+        $this->render('reservation/myreservations', [
+            'reservations'          => $reservations,
+            'sessionsByReservation' => $sessionsByReservation,
+        ]);
+    }
+
+    // Show edit form (owner or admin; pending or confirmed-unstarted only)
+    public function edit($id)
+    {
+        $this->requireLogin();
+        $id = (int) $id;
+
+        $reservationModel = new Reservation();
+        $reservation = $reservationModel->getById($id);
+        if (!$reservation) {
+            http_response_code(404);
+            $this->render('error/404');
+            return;
+        }
+        if (!$this->isAdmin() && (int)($reservation['id_user'] ?? 0) !== (int)$_SESSION['user_id']) {
+            $this->redirect('/reservations/my');
+            return;
+        }
+        if (($blockCode = $this->editBlockCode($reservation)) !== null) {
+            $this->redirect(($this->isAdmin() ? '/reservations' : '/reservations/my') . '?error=' . $blockCode);
+            return;
+        }
+
+        $tableModel = new Table();
+        $gameModel  = new Game();
+        $tables = $tableModel->getAll();
+        $games  = $gameModel->getAvailable();
+        // Keep the currently booked game selectable even if flagged in_use.
+        if (!empty($reservation['id_game'])) {
+            $found = false;
+            foreach ($games as $g) {
+                if ((int)$g['id_game'] === (int)$reservation['id_game']) { $found = true; break; }
+            }
+            if (!$found) {
+                $current = $gameModel->getById((int)$reservation['id_game']);
+                if ($current) { $games[] = $current; }
+            }
+        }
+
+        $this->render('reservation/edit', [
+            'reservation' => $reservation,
+            'form'        => [
+                'id_table'     => (int)($reservation['id_table'] ?? 0),
+                'id_game'      => (int)($reservation['id_game'] ?? 0),
+                'people_count' => (int)($reservation['people_count'] ?? 1),
+                'date'         => $reservation['reservation_date'] ?? '',
+                'time'         => substr($reservation['reservation_time'] ?? '', 0, 5),
+                'end_time'     => substr($reservation['reservation_end_time'] ?? '', 0, 5),
+            ],
+            'tables' => $tables,
+            'games'  => $games,
+        ]);
+    }
+
+    // Save modification (same validation as booking, availability re-checked
+    // excluding the reservation itself; status is never changed here)
+    public function update($id)
+    {
+        $this->requireLogin();
+        $id = (int) $id;
+
+        $reservationModel = new Reservation();
+        $reservation = $reservationModel->getById($id);
+        if (!$reservation) {
+            http_response_code(404);
+            $this->render('error/404');
+            return;
+        }
+        if (!$this->isAdmin() && (int)($reservation['id_user'] ?? 0) !== (int)$_SESSION['user_id']) {
+            $this->redirect('/reservations/my');
+            return;
+        }
+        if (($blockCode = $this->editBlockCode($reservation)) !== null) {
+            $this->redirect(($this->isAdmin() ? '/reservations' : '/reservations/my') . '?error=' . $blockCode);
+            return;
+        }
+
+        $tableModel = new Table();
+        $gameModel  = new Game();
+        $fail = function (string $error, array $form) use ($tableModel, $gameModel, $reservation, $id) {
+            $tables = $tableModel->getAll();
+            $games  = $gameModel->getAvailable();
+            if (!empty($reservation['id_game'])) {
+                $found = false;
+                foreach ($games as $g) {
+                    if ((int)$g['id_game'] === (int)$reservation['id_game']) { $found = true; break; }
+                }
+                if (!$found) {
+                    $current = $gameModel->getById((int)$reservation['id_game']);
+                    if ($current) { $games[] = $current; }
+                }
+            }
+            $this->render('reservation/edit', [
+                'error'       => $error,
+                'reservation' => $reservation,
+                'form'        => $form,
+                'tables'      => $tables,
+                'games'       => $games,
+            ]);
+        };
+
+        if (($csrfError = Csrf::requireValid()) !== null) {
+            $this->render('reservation/edit', [
+                'error'       => $csrfError,
+                'reservation' => $reservation,
+                'form'        => $this->formFromReservation($reservation),
+                'tables'      => $tableModel->getAll(),
+                'games'       => $gameModel->getAvailable(),
+            ]);
+            return;
+        }
+
+        $data = [
+            'id_table'              => Sanitizer::int($_POST['id_table'] ?? 0, 0),
+            'id_game'               => Sanitizer::int($_POST['id_game'] ?? 0, 0),
+            'people_count'          => Sanitizer::int($_POST['people_count'] ?? 1, 1),
+            'reservation_date'      => Sanitizer::str($_POST['reservation_date'] ?? '', 10),
+            'reservation_time'      => Sanitizer::str($_POST['reservation_time'] ?? '', 8),
+            'reservation_end_time'  => Sanitizer::str($_POST['reservation_end_time'] ?? '', 8),
+        ];
+        $form = [
+            'id_table'     => $data['id_table'],
+            'id_game'      => $data['id_game'],
+            'people_count' => $data['people_count'],
+            'date'         => $data['reservation_date'],
+            'time'         => $data['reservation_time'],
+            'end_time'     => $data['reservation_end_time'],
+        ];
+
+        if (empty($data['id_table']) || empty($data['reservation_date']) || empty($data['reservation_time']) || empty($data['reservation_end_time'])) {
+            $fail('Please fill all fields', $form);
+            return;
+        }
+
+        // Backend parity with booking: table/date/time formats + past-date guard.
+        if (($e = Validator::intRange($data['id_table'], 1, 1000000, 'table')) !== null
+            || ($e = Validator::intRange($data['people_count'], 1, 30, 'people')) !== null
+            || ($e = Validator::slot($data['reservation_date'], $data['reservation_time'], $data['reservation_end_time'])) !== null) {
+            $fail($e, $form);
+            return;
+        }
+        if ($data['id_game'] !== 0 && Validator::intRange($data['id_game'], 1, 1000000, 'game') !== null) {
+            $data['id_game'] = 0;
+            $form['id_game'] = 0;
+        }
+
+        // End time: must be after start, min 30 minutes.
+        $startMins = strtotime($data['reservation_time']);
+        $endMins   = strtotime($data['reservation_end_time']);
+        if ($startMins === false || $endMins === false || ($endMins - $startMins) < 1800) {
+            $fail('End time must be at least 30 minutes after the start time.', $form);
+            return;
+        }
+
+        // People count vs game min/max.
+        if (!empty($data['id_game'])) {
+            $game = $gameModel->getById($data['id_game']);
+            if ($game) {
+                if ($data['people_count'] < $game['players_min']) {
+                    $fail('This game requires at least ' . $game['players_min'] . ' players. You entered ' . $data['people_count'] . '.', $form);
+                    return;
+                }
+                if ($data['people_count'] > $game['players_max']) {
+                    $fail('This game supports max ' . $game['players_max'] . ' players. You entered ' . $data['people_count'] . '.', $form);
+                    return;
+                }
+            }
+        }
+
+        // People count vs table capacity.
+        $table = $tableModel->getById($data['id_table']);
+        if ($table && $data['people_count'] > $table['capacity']) {
+            $fail('Table "' . $table['name_table'] . '" only seats ' . $table['capacity'] . ' people. Your group has ' . $data['people_count'] . '.', $form);
+            return;
+        }
+
+        // Prevent duplicate submission (excluding itself).
+        if ($reservationModel->isDuplicate((int)$reservation['id_user'], $data['id_table'], $data['reservation_date'], $data['reservation_time'], $id)) {
+            $this->redirect($this->isAdmin() ? '/reservations' : '/reservations/my');
+            return;
+        }
+
+        // Availability re-check (excluding itself).
+        if (!$reservationModel->checkAvailability($data['id_table'], $data['reservation_date'], $data['reservation_time'], $id)) {
+            $fail('Table not available at that time', $form);
+            return;
+        }
+
+        if ($reservationModel->update($id, $data)) {
+            (new Table())->syncStatuses();
+            $this->redirect($this->isAdmin() ? '/reservations' : '/reservations/my?updated=1');
+        } else {
+            $fail('Failed to update reservation', $form);
+        }
+    }
+
+    // A reservation can be modified only while pending or confirmed-but-unstarted:
+    // never when cancelled, already ended, or with a live session on it.
+    // Returns 'edit_session' / 'edit_closed' when blocked, null when editable.
+    private function editBlockCode(array $reservation): ?string
+    {
+        $status = $reservation['status_reservation'] ?? '';
+        if (!in_array($status, ['pending', 'confirmed'], true)) {
+            return 'edit_closed';
+        }
+        $today = date('Y-m-d');
+        $date  = $reservation['reservation_date'] ?? '';
+        if ($date < $today) {
+            return 'edit_closed';
+        }
+        if ($date === $today && substr($reservation['reservation_end_time'] ?? '', 0, 8) <= date('H:i:s')) {
+            return 'edit_closed';
+        }
+        if ($status === 'confirmed') {
+            $sessionModel = new \App\Model\Session();
+            if ($sessionModel->getActiveByReservationId((int)($reservation['id_reservation'] ?? 0))) {
+                return 'edit_session';
+            }
+        }
+        return null;
+    }
+
+    private function formFromReservation(array $reservation): array
+    {
+        return [
+            'id_table'     => (int)($reservation['id_table'] ?? 0),
+            'id_game'      => (int)($reservation['id_game'] ?? 0),
+            'people_count' => (int)($reservation['people_count'] ?? 1),
+            'date'         => $reservation['reservation_date'] ?? '',
+            'time'         => substr($reservation['reservation_time'] ?? '', 0, 5),
+            'end_time'     => substr($reservation['reservation_end_time'] ?? '', 0, 5),
+        ];
     }
 
     // Check availability page

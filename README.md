@@ -171,6 +171,8 @@ return [
 | GET    | `/reservations/create`        | Book a table form                     |
 | POST   | `/reservations`               | Store reservation                     |
 | GET    | `/reservations/my`            | My reservations (player)              |
+| GET    | `/reservations/{id}/edit`     | Edit booking form (owner/admin)       |
+| POST   | `/reservations/{id}/update`   | Update booking (owner/admin)          |
 | GET    | `/reservations/availability`  | Check table availability              |
 | POST   | `/reservations/{id}/status`   | Confirm / cancel reservation          |
 | GET    | `/sessions`                   | Active sessions dashboard             |

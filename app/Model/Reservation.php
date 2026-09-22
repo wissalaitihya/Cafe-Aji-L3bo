@@ -114,8 +114,38 @@ class Reservation
         return $stmt->execute();
     }
 
-    //  4. updateStatus($id, $status)
+    //  3b. update($id, $data) — reschedule / modify date, time, table, game, people.
+    //  Status is never changed here (confirm/cancel have their own endpoints).
+    public function update(int $id, array $data): bool
+    {
+        $idGame  = !empty($data['id_game'])  ? (int)$data['id_game']  : null;
+        $endTime = !empty($data['reservation_end_time']) ? $data['reservation_end_time'] : null;
 
+        $sql = "
+            UPDATE reservations
+            SET    id_table = :id_table,
+                   id_game  = :id_game,
+                   people_count = :people_count,
+                   reservation_date = :reservation_date,
+                   reservation_time = :reservation_time,
+                   reservation_end_time = :reservation_end_time
+            WHERE  id_reservation = :id
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindParam(':id_table',              $data['id_table'],         \PDO::PARAM_INT);
+        $stmt->bindParam(':id_game',               $idGame,                   $idGame   ? \PDO::PARAM_INT : \PDO::PARAM_NULL);
+        $stmt->bindParam(':people_count',          $data['people_count'],     \PDO::PARAM_INT);
+        $stmt->bindParam(':reservation_date',      $data['reservation_date'], \PDO::PARAM_STR);
+        $stmt->bindParam(':reservation_time',      $data['reservation_time'], \PDO::PARAM_STR);
+        $stmt->bindParam(':reservation_end_time',  $endTime,                  $endTime  ? \PDO::PARAM_STR : \PDO::PARAM_NULL);
+        $stmt->bindParam(':id',                    $id,                       \PDO::PARAM_INT);
+
+        return $stmt->execute();
+    }
+
+    //  4. updateStatus($id, $status)
     public function updateStatus(int $id, string $status): bool
     {
         // Whitelist — never trust user input for ENUM values
@@ -209,8 +239,10 @@ class Reservation
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    //  7. checkAvailability($tableId, $date, $time)
-    public function checkAvailability(int $tableId, string $date, string $time): bool
+    //  7. checkAvailability($tableId, $date, $time, $excludeId = null)
+    //  $excludeId skips one reservation (the one being edited) so an
+    //  update that keeps the same slot doesn't conflict with itself.
+    public function checkAvailability(int $tableId, string $date, string $time, ?int $excludeId = null): bool
     {
         $sql = "
             SELECT COUNT(*) AS conflict_count
@@ -222,12 +254,18 @@ class Reservation
               AND  :time < ADDTIME(r.reservation_time, SEC_TO_TIME(COALESCE(g.duration, 120) * 60))
               AND  ADDTIME(:time2, SEC_TO_TIME(COALESCE(g.duration, 120) * 60)) > r.reservation_time
         ";
+        if ($excludeId !== null) {
+            $sql .= " AND r.id_reservation != :excl";
+        }
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':table_id', $tableId, \PDO::PARAM_INT);
         $stmt->bindParam(':date',     $date,    \PDO::PARAM_STR);
         $stmt->bindParam(':time',     $time,    \PDO::PARAM_STR);
         $stmt->bindParam(':time2',    $time,    \PDO::PARAM_STR);
+        if ($excludeId !== null) {
+            $stmt->bindParam(':excl', $excludeId, \PDO::PARAM_INT);
+        }
         $stmt->execute();
 
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -235,7 +273,7 @@ class Reservation
         return (int) $row['conflict_count'] === 0;
     }
 
-    public function isDuplicate(int $userId, int $tableId, string $date, string $time): bool
+    public function isDuplicate(int $userId, int $tableId, string $date, string $time, ?int $excludeId = null): bool
     {
         $sql = "
             SELECT COUNT(*) AS cnt
@@ -246,11 +284,17 @@ class Reservation
               AND  reservation_time    = :time
               AND  status_reservation != 'cancelled'
         ";
+        if ($excludeId !== null) {
+            $sql .= " AND id_reservation != :excl";
+        }
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':user_id',  $userId,  \PDO::PARAM_INT);
         $stmt->bindParam(':table_id', $tableId, \PDO::PARAM_INT);
         $stmt->bindParam(':date',     $date,    \PDO::PARAM_STR);
         $stmt->bindParam(':time',     $time,    \PDO::PARAM_STR);
+        if ($excludeId !== null) {
+            $stmt->bindParam(':excl', $excludeId, \PDO::PARAM_INT);
+        }
         $stmt->execute();
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
         return (int) $row['cnt'] > 0;

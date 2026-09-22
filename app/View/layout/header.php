@@ -52,7 +52,9 @@
     }
     $mainPageClass = '';
     if ($userRole !== 'guest') {
-        if (in_array($cp, [BASE_PATH . '/player/dashboard', BASE_PATH . '/reservations/my', BASE_PATH . '/reservations/create'], true)
+        // Admin pages always span the full available width (same as player pages).
+        if ($userRole === 'admin'
+            || in_array($cp, [BASE_PATH . '/player/dashboard', BASE_PATH . '/reservations/my', BASE_PATH . '/reservations/create'], true)
             || str_ends_with($cp, '/player/dashboard')
             || str_ends_with($cp, '/reservations/my')
             || str_ends_with($cp, '/reservations/create')) {

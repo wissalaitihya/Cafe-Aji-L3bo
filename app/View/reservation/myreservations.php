@@ -12,6 +12,12 @@
 <?php if (!empty($_GET['error']) && $_GET['error'] === 'session_started'): ?>
     <div class="alert alert-error">&#10007; Cannot cancel &mdash; your session has already started. Ask staff to end it.</div>
 <?php endif; ?>
+<?php if (!empty($_GET['error']) && $_GET['error'] === 'edit_session'): ?>
+    <div class="alert alert-error">&#10007; Cannot modify &mdash; your session has already started. Ask staff to end it first.</div>
+<?php endif; ?>
+<?php if (!empty($_GET['error']) && $_GET['error'] === 'edit_closed'): ?>
+    <div class="alert alert-error">&#10007; Cannot modify &mdash; this reservation is finished or cancelled.</div>
+<?php endif; ?>
 
 <?php if (empty($reservations)): ?>
     <div class="empty-state"><p>You have no reservations yet. <a href="<?= BASE_PATH ?>/reservations/create">Book one now!</a></p></div>
@@ -75,6 +81,10 @@
         </div>
         <!-- Action -->
         <div class="my-res-card-action">
+            <?php $liveSession = ($sessionsByReservation ?? [])[(int)$r['id_reservation']] ?? null; ?>
+            <?php if (in_array($status, ['pending', 'confirmed']) && !$isPast && !$liveSession): ?>
+                <a href="<?= BASE_PATH ?>/reservations/<?= (int)$r['id_reservation'] ?>/edit" class="btn btn-small btn-warning">&#9998; Edit</a>
+            <?php endif; ?>
             <?php if (in_array($status, ['pending', 'confirmed'])): ?>
                 <form method="POST" action="<?= BASE_PATH ?>/reservations/<?= (int)$r['id_reservation'] ?>/cancel"
                       onsubmit="return confirm('Cancel this reservation?')">
