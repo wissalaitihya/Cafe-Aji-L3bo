@@ -26,6 +26,9 @@
             'Mafia'     => 'images/games/Mafia-Game.png',
             'Codenames' => 'images/games/Codenames-Game.png',
             'Catan'     => 'images/games/Catan-Game.png',
+            'Dixit'     => 'images/games/Dixit-Game.png',
+            'Chess'     => 'images/games/Chess-Game.png',
+            'Monopoly'  => 'images/games/Monopoly-Game.png',
         ];
         $candidates = [];
         if (!empty($game['image_game'])) {
