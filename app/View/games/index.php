@@ -6,7 +6,7 @@
     <div class="hero-glow hero-glow-b"></div>
     <div class="hero-inner">
         <div class="hero-copy">
-            <p class="hero-eyebrow">&#129351; Casablanca's Board Game Café</p>
+            <p class="hero-eyebrow"><span class="hero-eyebrow-dot" aria-hidden="true"></span>Casablanca's Board Game Café</p>
             <h1 class="hero-title">Play.<br><span class="hero-title-accent">Laugh.</span> Repeat.</h1>
             <p class="hero-sub">From social deduction to cooperative quests — grab your squad, pick a table, and let the games begin.</p>
             <div class="hero-actions">
@@ -24,7 +24,22 @@
                 <div class="hero-stat"><span class="hero-stat-num">24/7</span><span class="hero-stat-label">Game Service</span></div>
             </div>
         </div>
+        <div class="hero-center" aria-label="Tonight at the café">
+            <div class="hero-tonight">
+                <p class="hero-tonight-kicker"><span class="hero-eyebrow-dot" aria-hidden="true"></span>Tonight at the café</p>
+                <p class="hero-tonight-num"><?= (int)($heroStats['tables'] ?? 0) ?></p>
+                <p class="hero-tonight-lbl">tables ready</p>
+                <a href="<?= BASE_PATH ?>/reservations/availability" class="hero-tonight-link">See live availability &rarr;</a>
+            </div>
+            <ol class="hero-steps">
+                <li><strong>01</strong> Pick a game</li>
+                <li><strong>02</strong> Book a table</li>
+                <li><strong>03</strong> Play &amp; repeat</li>
+            </ol>
+        </div>
         <div class="hero-visual" aria-hidden="true">
+            <span class="hero-chip hero-chip-1"><strong><?= (int)($heroStats['games'] ?? count($games)) ?></strong> games on the shelf</span>
+            <span class="hero-chip hero-chip-2"><strong><?= (int)($heroStats['tables'] ?? 0) ?></strong> tables ready tonight</span>
             <svg viewBox="0 0 600 460" fill="none" xmlns="http://www.w3.org/2000/svg" role="presentation">
                 <defs>
                     <linearGradient id="hCardPurple" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#a855f7"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient>
