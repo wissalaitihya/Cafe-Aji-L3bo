@@ -12,8 +12,8 @@
 <?php if (!empty($_GET['error']) && $_GET['error'] === 'session_started'): ?>
     <div class="alert alert-error">&#10007; Cannot cancel &mdash; your session has already started. Ask staff to end it.</div>
 <?php endif; ?>
-<?php if (!empty($_GET['error']) && $_GET['error'] === 'edit_session'): ?>
-    <div class="alert alert-error">&#10007; Cannot modify &mdash; your session has already started. Ask staff to end it first.</div>
+<?php if (!empty($_GET['error']) && $_GET['error'] === 'edit_confirmed'): ?>
+    <div class="alert alert-error">&#10007; This reservation was already confirmed &mdash; please cancel it and make a new reservation.</div>
 <?php endif; ?>
 <?php if (!empty($_GET['error']) && $_GET['error'] === 'edit_closed'): ?>
     <div class="alert alert-error">&#10007; Cannot modify &mdash; this reservation is finished or cancelled.</div>
@@ -54,6 +54,9 @@
         $today   = date('Y-m-d');
         $isToday = ($r['reservation_date'] === $today);
         $isPast  = ($r['reservation_date'] < $today);
+        // Ended = past day, or today with end time already passed.
+        // Ended bookings show no Cancel/Edit actions (history only).
+        $hasEnded = $isPast || ($isToday && $endT !== null && $endT <= date('H:i'));
     ?>
     <div class="my-res-card status-border-<?= $status ?> <?= $isPast ? 'res-past' : '' ?>">
         <div class="my-res-card-main">
@@ -81,11 +84,10 @@
         </div>
         <!-- Action -->
         <div class="my-res-card-action">
-            <?php $liveSession = ($sessionsByReservation ?? [])[(int)$r['id_reservation']] ?? null; ?>
-            <?php if (in_array($status, ['pending', 'confirmed']) && !$isPast && !$liveSession): ?>
+            <?php if ($status === 'pending' && !$hasEnded): ?>
                 <a href="<?= BASE_PATH ?>/reservations/<?= (int)$r['id_reservation'] ?>/edit" class="btn btn-small btn-warning">&#9998; Edit</a>
             <?php endif; ?>
-            <?php if (in_array($status, ['pending', 'confirmed'])): ?>
+            <?php if (in_array($status, ['pending', 'confirmed']) && !$hasEnded): ?>
                 <form method="POST" action="<?= BASE_PATH ?>/reservations/<?= (int)$r['id_reservation'] ?>/cancel"
                       onsubmit="return confirm('Cancel this reservation?')">
     <?= \Core\Csrf::field() ?>

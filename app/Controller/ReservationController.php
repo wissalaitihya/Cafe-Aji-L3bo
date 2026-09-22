@@ -304,7 +304,7 @@ class ReservationController
         ]);
     }
 
-    // Show edit form (owner or admin; pending or confirmed-unstarted only)
+    // Show edit form (owner or admin; pending bookings only)
     public function edit($id)
     {
         $this->requireLogin();
@@ -317,12 +317,17 @@ class ReservationController
             $this->render('error/404');
             return;
         }
-        if (!$this->isAdmin() && (int)($reservation['id_user'] ?? 0) !== (int)$_SESSION['user_id']) {
+        // Admins confirm/cancel only — modification is the player's own action.
+        if ($this->isAdmin()) {
+            $this->redirect('/reservations?error=edit_admin');
+            return;
+        }
+        if ((int)($reservation['id_user'] ?? 0) !== (int)$_SESSION['user_id']) {
             $this->redirect('/reservations/my');
             return;
         }
         if (($blockCode = $this->editBlockCode($reservation)) !== null) {
-            $this->redirect(($this->isAdmin() ? '/reservations' : '/reservations/my') . '?error=' . $blockCode);
+            $this->redirect('/reservations/my?error=' . $blockCode);
             return;
         }
 
@@ -371,12 +376,17 @@ class ReservationController
             $this->render('error/404');
             return;
         }
-        if (!$this->isAdmin() && (int)($reservation['id_user'] ?? 0) !== (int)$_SESSION['user_id']) {
+        // Admins confirm/cancel only — modification is the player's own action.
+        if ($this->isAdmin()) {
+            $this->redirect('/reservations?error=edit_admin');
+            return;
+        }
+        if ((int)($reservation['id_user'] ?? 0) !== (int)$_SESSION['user_id']) {
             $this->redirect('/reservations/my');
             return;
         }
         if (($blockCode = $this->editBlockCode($reservation)) !== null) {
-            $this->redirect(($this->isAdmin() ? '/reservations' : '/reservations/my') . '?error=' . $blockCode);
+            $this->redirect('/reservations/my?error=' . $blockCode);
             return;
         }
 
@@ -493,34 +503,24 @@ class ReservationController
 
         if ($reservationModel->update($id, $data)) {
             (new Table())->syncStatuses();
-            $this->redirect($this->isAdmin() ? '/reservations' : '/reservations/my?updated=1');
+            $this->redirect('/reservations/my?updated=1');
         } else {
             $fail('Failed to update reservation', $form);
         }
     }
 
-    // A reservation can be modified only while pending or confirmed-but-unstarted:
-    // never when cancelled, already ended, or with a live session on it.
-    // Returns 'edit_session' / 'edit_closed' when blocked, null when editable.
+    // A reservation can be modified only while still pending.
+    // Once the admin confirms it, editing is blocked: the player must
+    // cancel it and make a new reservation instead.
+    // Returns 'edit_confirmed' / 'edit_closed' when blocked, null when editable.
     private function editBlockCode(array $reservation): ?string
     {
         $status = $reservation['status_reservation'] ?? '';
-        if (!in_array($status, ['pending', 'confirmed'], true)) {
-            return 'edit_closed';
-        }
-        $today = date('Y-m-d');
-        $date  = $reservation['reservation_date'] ?? '';
-        if ($date < $today) {
-            return 'edit_closed';
-        }
-        if ($date === $today && substr($reservation['reservation_end_time'] ?? '', 0, 8) <= date('H:i:s')) {
-            return 'edit_closed';
-        }
         if ($status === 'confirmed') {
-            $sessionModel = new \App\Model\Session();
-            if ($sessionModel->getActiveByReservationId((int)($reservation['id_reservation'] ?? 0))) {
-                return 'edit_session';
-            }
+            return 'edit_confirmed';
+        }
+        if ($status !== 'pending') {
+            return 'edit_closed';
         }
         return null;
     }
@@ -608,6 +608,16 @@ class ReservationController
 
         // Only pending or confirmed can be cancelled
         if (!in_array($status, ['pending', 'confirmed'], true)) {
+            $this->redirect('/reservations/my');
+            return;
+        }
+
+        // Ended bookings (past day, or today with end time passed) cannot be cancelled.
+        $today = date('Y-m-d');
+        $ended = ($reservation['reservation_date'] ?? '') < $today
+            || (($reservation['reservation_date'] ?? '') === $today
+                && substr($reservation['reservation_end_time'] ?? '', 0, 5) <= date('H:i'));
+        if ($ended) {
             $this->redirect('/reservations/my');
             return;
         }

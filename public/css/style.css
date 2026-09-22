@@ -371,6 +371,11 @@ a:hover { color: var(--purple-bright); }
     justify-content: center;
     text-align: center;
 }
+.content.page-form-center .page-intro {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
 
 /* ── Page header (h1 + action button row) ── */
 .page-header {

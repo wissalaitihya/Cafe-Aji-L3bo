@@ -60,7 +60,8 @@
             || str_ends_with($cp, '/reservations/create')) {
             $mainPageClass = ' page-full';
         }
-        if (str_ends_with($cp, '/reservations/create')) {
+        if (str_ends_with($cp, '/reservations/create')
+            || preg_match('#/reservations/\d+/edit$#', $cp)) {
             $mainPageClass .= ' page-form-center';
         }
     }

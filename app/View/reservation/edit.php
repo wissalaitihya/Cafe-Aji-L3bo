@@ -8,6 +8,16 @@
     $backUrl  = (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin')
         ? BASE_PATH . '/reservations'
         : BASE_PATH . '/reservations/my';
+    // Current table/game snapshot: the live-availability APIs can't see the
+    // booking being edited, so they would hide its own slot — re-add if missing.
+    $curTable = null;
+    foreach (($tables ?? []) as $t) {
+        if ((int)$t['id_table'] === (int)$pTable) { $curTable = $t; break; }
+    }
+    $curGame = null;
+    foreach (($games ?? []) as $g) {
+        if ((int)$g['id_game'] === (int)$pGame) { $curGame = $g; break; }
+    }
 ?>
 <?php require __DIR__ . '/../layout/header.php'; ?>
 
@@ -74,6 +84,12 @@
         <label for="people_count">Number of People</label>
         <input type="number" id="people_count" name="people_count" min="1" max="30" value="<?= htmlspecialchars((string)($pPeople ?: '2')) ?>" required>
         <small class="field-hint text-warning" id="people-hint" style="display:none"></small>
+    </div>
+
+    <!-- ── Game Recommendations ── -->
+    <div id="recommend-box" class="recommend-box" style="display:none">
+        <div class="recommend-header">&#129302; Suggested games for <strong id="recommend-count"></strong> players</div>
+        <div id="recommend-list" class="recommend-list"></div>
     </div>
 
     <div class="form-group">
@@ -278,9 +294,173 @@
         }
     });
 
-    gameSelect.addEventListener('change', runValidation);
+    gameSelect.addEventListener('change', function() { runValidation(); fetchAvailabilityDebounced(); });
     peopleInput.addEventListener('input', runValidation);
     tableSelect.addEventListener('change', runValidation);
+
+    // Snapshot of the booking being edited (the availability APIs exclude it).
+    var origTableId   = '<?= (int)($form['id_table'] ?? 0) ?>';
+    var origTableName = <?= json_encode($curTable['name_table'] ?? '', JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    var origTableCap  = <?= (int)($curTable['capacity'] ?? 0) ?>;
+    var origGameId    = '<?= (int)($form['id_game'] ?? 0) ?>';
+    var origGameName  = <?= json_encode($curGame['name_game'] ?? '', JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    var origGameMin   = <?= (int)($curGame['players_min'] ?? 0) ?>;
+    var origGameMax   = <?= (int)($curGame['players_max'] ?? 0) ?>;
+    var origGameDur   = <?= (int)($curGame['duration'] ?? 0) ?>;
+
+    // ── Fetch available tables when date/time/game changes (debounced 250ms) ─
+    var availTimer = null;
+    function fetchAvailabilityDebounced() {
+        clearTimeout(availTimer);
+        availTimer = setTimeout(fetchAvailability, 250);
+    }
+    function fetchAvailability() {
+        var date    = dateInput.value;
+        var time    = timeInput.value;
+        var endTime = endTimeInput.value;
+        var gameId  = gameSelect.value;
+
+        if (!date || !time) return;
+
+        var currentTable = tableSelect.value;
+        var url = '<?= BASE_PATH ?>/api/available-tables?date=' + encodeURIComponent(date) +
+                  '&time=' + encodeURIComponent(time) +
+                  (endTime ? '&end_time=' + encodeURIComponent(endTime) : '') +
+                  (gameId && gameId !== '0' ? '&game_id=' + encodeURIComponent(gameId) : '');
+
+        fetch(url)
+            .then(function(r) { return r.json(); })
+            .then(function(tables) {
+                tableSelect.innerHTML = '<option value="">-- Choose a table --</option>';
+                tables.forEach(function(t) {
+                    var opt = document.createElement('option');
+                    opt.value = t.id_table;
+                    opt.setAttribute('data-capacity', t.capacity);
+                    opt.textContent = t.name_table + ' (capacity: ' + t.capacity + ')';
+                    if (String(t.id_table) === String(currentTable)) opt.selected = true;
+                    tableSelect.appendChild(opt);
+                });
+                // Keep the booking's own table selectable (the API excludes it).
+                if (origTableId && origTableId !== '0' && !tableSelect.querySelector('option[value="' + origTableId + '"]')) {
+                    var keepT = document.createElement('option');
+                    keepT.value = origTableId;
+                    keepT.setAttribute('data-capacity', origTableCap);
+                    keepT.textContent = origTableName + ' (capacity: ' + origTableCap + ') — current';
+                    if (String(origTableId) === String(currentTable)) keepT.selected = true;
+                    tableSelect.appendChild(keepT);
+                }
+
+                var hintRow = document.getElementById('table-hint-row');
+                var hintEl  = document.getElementById('table-capacity-hint');
+                if (gameId && gameId !== '0') {
+                    var gameOpt = gameSelect.options[gameSelect.selectedIndex];
+                    var min = gameOpt.getAttribute('data-min');
+                    var max = gameOpt.getAttribute('data-max');
+                    hintEl.textContent = 'Tables shown have capacity between ' + min + ' and ' + max + " (this game's player range)";
+                    hintRow.style.display = '';
+                } else {
+                    hintRow.style.display = 'none';
+                }
+                checkPeopleVsTable();
+                runValidation();
+            });
+
+        // Also refresh games
+        fetch('<?= BASE_PATH ?>/api/available-games?date=' + encodeURIComponent(date) + '&time=' + encodeURIComponent(time))
+            .then(function(r) { return r.json(); })
+            .then(function(games) {
+                var currentGame = gameSelect.value;
+                gameSelect.innerHTML = '<option value="0">-- No game --</option>';
+                games.forEach(function(g) {
+                    var opt = document.createElement('option');
+                    opt.value = g.id_game;
+                    opt.setAttribute('data-min', g.players_min);
+                    opt.setAttribute('data-max', g.players_max);
+                    opt.textContent = g.name_game + ' (' + g.players_min + '–' + g.players_max + ' players, ' + g.duration + ' min)';
+                    if (String(g.id_game) === String(currentGame)) opt.selected = true;
+                    gameSelect.appendChild(opt);
+                });
+                // Keep the booking's own game selectable (the API excludes it).
+                if (origGameId && origGameId !== '0' && !gameSelect.querySelector('option[value="' + origGameId + '"]')) {
+                    var keepG = document.createElement('option');
+                    keepG.value = origGameId;
+                    keepG.setAttribute('data-min', origGameMin);
+                    keepG.setAttribute('data-max', origGameMax);
+                    keepG.textContent = origGameName + ' (' + origGameMin + '–' + origGameMax + ' players, ' + origGameDur + ' min) — current';
+                    if (String(origGameId) === String(currentGame)) keepG.selected = true;
+                    gameSelect.appendChild(keepG);
+                }
+                checkPeopleVsGame();
+                runValidation();
+            });
+    }
+
+    dateInput.addEventListener('change', fetchAvailabilityDebounced);
+    timeInput.addEventListener('change', fetchAvailabilityDebounced);
+    endTimeInput.addEventListener('change', fetchAvailabilityDebounced);
+    // Note: gameSelect change already handled above (runValidation + fetchAvailability)
+
+    // ── Game Recommendations ──────────────────────────
+    var recommendBox   = document.getElementById('recommend-box');
+    var recommendList  = document.getElementById('recommend-list');
+    var recommendCount = document.getElementById('recommend-count');
+    var recommendTimer = null;
+
+    function fetchRecommendations() {
+        var n = parseInt(peopleInput.value) || 0;
+        if (n < 1) { recommendBox.style.display = 'none'; return; }
+
+        clearTimeout(recommendTimer);
+        recommendTimer = setTimeout(function() {
+            fetch('<?= BASE_PATH ?>/api/recommend?players=' + n)
+                .then(function(r) { return r.json(); })
+                .then(function(games) {
+                    recommendList.innerHTML = '';
+                    if (!games.length) { recommendBox.style.display = 'none'; return; }
+
+                    recommendCount.textContent = n;
+                    recommendBox.style.display = '';
+
+                    games.forEach(function(g) {
+                        var stars = '';
+                        if (g.avg_stars > 0) {
+                            for (var i = 1; i <= 5; i++) {
+                                stars += '<span style="color:' + (i <= Math.round(g.avg_stars) ? '#f59e0b' : '#555') + '">★</span>';
+                            }
+                            stars += ' <span style="color:#aaa;font-size:0.78rem">(' + g.total_ratings + ')</span>';
+                        }
+
+                        var diffColor = g.difficulty === 'easy' ? '#22c55e' : g.difficulty === 'hard' ? '#ef4444' : '#f59e0b';
+                        var html = '<div class="recommend-item" data-id="' + g.id_game + '" data-min="' + g.players_min + '" data-max="' + g.players_max + '">' +
+                            '<div class="recommend-item-name">' + g.name_game + '</div>' +
+                            '<div class="recommend-item-meta">' +
+                                '<span>👥 ' + g.players_min + '–' + g.players_max + '</span>' +
+                                '<span>⏰ ' + g.duration + 'm</span>' +
+                                '<span style="color:' + diffColor + '">' + g.difficulty.charAt(0).toUpperCase() + g.difficulty.slice(1) + '</span>' +
+                                (stars ? '<span class="recommend-stars">' + stars + '</span>' : '') +
+                            '</div>' +
+                        '</div>';
+                        recommendList.innerHTML += html;
+                    });
+
+                    // Click a recommendation to pre-select that game
+                    recommendList.querySelectorAll('.recommend-item').forEach(function(item) {
+                        item.addEventListener('click', function() {
+                            var gameId = item.dataset.id;
+                            var opt = gameSelect.querySelector('option[value="' + gameId + '"]');
+                            if (opt) {
+                                gameSelect.value = gameId;
+                                runValidation();
+                                item.style.borderColor = 'var(--purple)';
+                            }
+                        });
+                    });
+                });
+        }, 300);
+    }
+
+    peopleInput.addEventListener('input', fetchRecommendations);
+    fetchRecommendations();
 })();
 </script>
 
